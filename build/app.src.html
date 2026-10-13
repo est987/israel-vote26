@@ -302,10 +302,10 @@ details.about p{margin:6px 0}
 <script>
 /* ===== Config ===== */
 document.documentElement.dir='rtl';document.documentElement.lang='he';
-const BUILD='2026-10-13 22:05';
+const BUILD='2026-10-13 22:15';
 const CFG={
   data:{base:'data/base.json',nbhd:'data/nbhd.json',sites:'data/sites.json',meta:'data/meta.json'},
-  maxCompare:4, maxRows:400,
+  maxCompare:4, maxRows:400, maxNearKm:300,
   exceljs:'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js', // loaded only when exporting
   // Basemaps without API keys. Outside hosts are blocked in the Claude artifact viewer; they work on any normal web host.
   basemaps:{
@@ -337,7 +337,7 @@ function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return'#'+A.map((x,i)=>Math.
 const add=(a,b)=>a?a.map((x,i)=>x+b[i]):b.slice();
 
 /* ===== State ===== */
-const S={mode:'margin',f:{tmin:0,tmax:100,bloc:'coal',bmin:0,bmax:100},near:{pt:null,n:10,pseudo:true,onlyF:true,res:[]},dist:{pt:null,km:5},view:'main',picking:false,pickParty:new Set([0]),pickWin:null,bloc:'coal',showSites:false,basemap:'outline',sel:null,town:'',q:'',pins:[],tab:'map',pendingFit:null};
+const S={mode:'margin',f:{tmin:0,tmax:100,bloc:'coal',bmin:0,bmax:100},near:{pt:null,by:'n',n:10,km:2,pseudo:true,onlyF:true,res:[]},dist:{pt:null,km:5},view:'main',picking:false,pickParty:new Set([0]),pickWin:null,bloc:'coal',showSites:false,basemap:'outline',sel:null,town:'',q:'',pins:[],tab:'map',pendingFit:null};
 let D,map,nbLayer,siteLayer,townLabels=[],breaks=[],legendOpen=!matchMedia('(max-width:700px),(max-height:500px) and (max-width:950px)').matches;
 
 /* ===== Metrics ===== */
@@ -778,6 +778,8 @@ function nearAction(a){
 }
 function onNearChange(e){if(S.view!=='near')return;const id=e.target.id;
   if(id==='nN'){S.near.n=Math.max(1,Math.min(100,parseInt(e.target.value)||10))}
+  else if(id==='nKm'){S.near.km=Math.max(0.1,Math.min(50,parseFloat(e.target.value)||2))}
+  else if(e.target.name==='nBy'){S.near.by=e.target.value;if(!S.near.pt){renderDetail();return}}
   else if(id==='nPseudo')S.near.pseudo=e.target.checked;
   else if(id==='nOnlyF')S.near.onlyF=e.target.checked;else return;
   if(S.near.pt){runNear();renderDetail()}}
@@ -888,37 +890,44 @@ function runNear(){
   const pt=S.near.pt,useF=S.near.onlyF&&filterActive();
   const P=kmXY(pt.lat),[px,py]=P(pt.lng,pt.lat);
   let c=D.nb.filter(p=>p.v&&(S.near.pseudo||!p.pseudo)&&(!useF||passes(p.v)))
-    .map(p=>{const[x,y]=P(p.c[1],p.c[0]);return{p,d0:Math.hypot(x-px,y-py)}}).sort((a,b)=>a.d0-b.d0).slice(0,Math.max(60,S.near.n*4));
+    .map(p=>{const[x,y]=P(p.c[1],p.c[0]);return{p,d0:Math.hypot(x-px,y-py)}}).sort((a,b)=>a.d0-b.d0);
+  const byKm=S.near.by==='km';
+  // by radius: centroid prefilter with an 8 km margin (large areas), then exact edge distance
+  c=byKm?c.filter(o=>o.d0<=S.near.km+8):c.slice(0,Math.max(60,S.near.n*4));
   c.forEach(o=>o.d=polyDist(o.p.f.geometry,pt));c.sort((a,b)=>a.d-b.d||a.d0-b.d0);
-  S.near.res=c.slice(0,S.near.n);S.near.usedF=useF;drawNear()}
+  S.near.res=byKm?c.filter(o=>o.d<=S.near.km).slice(0,CFG.maxNearKm):c.slice(0,S.near.n);
+  S.near.capped=byKm&&c.filter(o=>o.d<=S.near.km).length>CFG.maxNearKm;S.near.usedF=useF;S.near.usedBy=byKm?'km':'n';drawNear()}
 function drawNear(){
   if(D.nearLayer){map.removeLayer(D.nearLayer);D.nearLayer=null}
   if(!S.near.pt)return;
   const g=L.layerGroup();
   S.near.res.forEach((o,k)=>{L.geoJSON(o.p.f,{interactive:false,style:{color:css('--accent'),weight:2.5,fill:false}}).addTo(g);
     L.marker(o.p.c,{interactive:false,icon:L.divIcon({className:'',html:`<div class="nlabel">${k+1}</div>`,iconSize:[22,18],iconAnchor:[11,9]})}).addTo(g)});
+  if(S.near.usedBy==='km')L.circle(S.near.pt,{radius:S.near.km*1000,color:css('--accent'),weight:2,dashArray:'6 5',fill:false,interactive:false}).addTo(g);
   L.circleMarker(S.near.pt,{radius:8,color:'#ffffff',weight:3,fillColor:css('--accent'),fillOpacity:1,interactive:false}).addTo(g);
   D.nearLayer=g.addTo(map)}
 function nearRowText(o,k){const v=o.p.v,b=blocShares(v);
   return `${k+1}. ${o.p.name||'ללא שם'}, ${o.p.town}${o.p.pseudo?' (אזור משוער)':''} · ${o.d<0.05?'במיקום':o.d.toFixed(1)+' ק"מ'} · הצבעה ${pct(v[VO]/v[E])} · קואליציה ${pct(b.coal)} · אופוזיציה ${pct(b.opp)} · ערביות ${pct(b.arab)} · מובילה: ${D.parties[winner(v)].name}`}
 function nearText(){const pt=S.near.pt;
-  return `שכונות קרובות ל-${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} (בחירות לכנסת ה-25)`+(S.near.usedF?`\nסינון: ${filterText().replace(/<[^>]+>/g,'')}`:'')+'\n'+S.near.res.map(nearRowText).join('\n')}
+  return (S.near.usedBy==='km'?`שכונות ברדיוס ${S.near.km} ק"מ מ-`:'שכונות קרובות ל-')+`${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} (בחירות לכנסת ה-25)`+(S.near.usedF?`\nסינון: ${filterText().replace(/<[^>]+>/g,'')}`:'')+'\n'+S.near.res.map(nearRowText).join('\n')}
 function copyNear(){const t=nearText();
   const fallback=()=>{const b=$('#copybox');b.hidden=false;b.value=t;b.focus();b.select();nearMsg('ההעתקה האוטומטית חסומה כאן. הטקסט מסומן, אפשר להעתיק ידנית.')};
   try{navigator.clipboard.writeText(t).then(()=>nearMsg(`הרשימה הועתקה (${S.near.res.length} שורות).`,true),fallback)}catch(e){fallback()}}
 function nearHTML(){
   const N=S.near,pt=N.pt,fa=filterActive();
-  let h=`<h2>שכונות קרובות</h2><div class="where">בחרו מיקום ומספר שכונות, וקבלו את השכונות הקרובות ביותר</div>
+  let h=`<h2>שכונות קרובות</h2><div class="where">בחרו מיקום, ואז מספר שכונות או רדיוס בק"מ</div>
   <div class="nearform">
     <div class="nrow"><button type="button" class="btn" data-near="pick">בחירה במפה</button><button type="button" class="btn ghost" data-near="geo">המיקום שלי</button></div>
     <div class="nrow"><span class="lbl">או הדביקו קואורדינטות (קו רוחב, קו אורך)</span><input type="text" id="nCoord" inputmode="decimal" placeholder="32.0853, 34.7818" value="${pt?pt.lat.toFixed(5)+', '+pt.lng.toFixed(5):''}" aria-label="קואורדינטות"><button type="button" class="btn ghost" data-near="coord">הצב</button></div>
-    <div class="nrow"><label for="nN" class="chk">מספר שכונות</label><input type="number" id="nN" min="1" max="100" value="${N.n}"></div>
+    <div class="nrow" role="radiogroup" aria-label="סוג חיפוש"><label class="chk"><input type="radio" name="nBy" value="n" ${N.by==='n'?'checked':''}> מספר שכונות</label><label class="chk"><input type="radio" name="nBy" value="km" ${N.by==='km'?'checked':''}> לפי מרחק</label></div>
+    ${N.by==='n'?`<div class="nrow"><label for="nN" class="chk">מספר שכונות</label><input type="number" id="nN" min="1" max="100" value="${N.n}"></div>`
+      :`<div class="nrow"><label for="nKm" class="chk">רדיוס (ק"מ)</label><input type="number" id="nKm" min="0.1" max="50" step="0.5" value="${N.km}"></div>`}
     <label class="chk"><input type="checkbox" id="nPseudo" ${N.pseudo?'checked':''}> כולל אזורים משוערים</label>
     <label class="chk"><input type="checkbox" id="nOnlyF" ${N.onlyF?'checked':''} ${fa?'':'disabled'}> רק שכונות שעומדות בסינון ${fa?'':'(אין סינון פעיל)'}</label>
     <div class="nmsg" id="nMsg"></div>
   </div>`;
   if(pt&&N.res.length){
-    h+=`<div class="sec"><h3>${N.res.length} השכונות הקרובות${N.usedF?' (מסונן)':''}</h3>
+    h+=`<div class="sec"><h3>${N.usedBy==='km'?`${N.res.length} שכונות ברדיוס ${N.km} ק"מ${N.capped?` (מוצגות ${CFG.maxNearKm} הקרובות)`:''}`:`${N.res.length} השכונות הקרובות`}${N.usedF?' (מסונן)':''}</h3>
     <div class="actions" style="margin:0 0 6px"><button type="button" class="btn" data-near="copy">העתקה</button><button type="button" class="btn ghost" data-near="fit">הצג במפה</button><button type="button" class="btn ghost" data-near="clear">ניקוי</button></div>
     <textarea id="copybox" hidden readonly aria-label="טקסט להעתקה"></textarea>
     <table class="nres num"><thead><tr><th>#</th><th>שכונה</th><th>מרחק</th><th>הצבעה</th><th>רוב גושים</th></tr></thead><tbody>
