@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="build" content="2026-10-13 20:05">
+<meta name="build" content="2026-10-13 22:05">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="תוצאות הבחירות לכנסת ה-25 לפי שכונות: אחוז הצבעה, מפלגה מובילה ושיעורי מפלגות וגושים.">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -936,7 +936,8 @@ details.about p{margin:6px 0}
   <aside id="list" aria-label="רשימת שכונות">
     <div class="tools">
       <input type="search" id="q" placeholder="חיפוש שכונה או ישוב" aria-label="חיפוש">
-      <select id="town" aria-label="ישוב"><option value="">כל הישובים</option><option value="__dist">לפי מרחק ממיקום…</option></select>
+      <select id="town" aria-label="ישוב"><option value="">כל הישובים</option><option value="__view">לפי התצוגה במפה</option><option value="__dist">לפי מרחק ממיקום…</option></select>
+      <div id="viewNote" class="nmsg ok" hidden>הרשימה מתעדכנת לפי מה שמוצג במפה. הזיזו או הגדילו את המפה כדי לשנות.</div>
       <div id="distRow" class="drow" hidden>
         <div class="nrow"><label for="dKm">רדיוס</label><input type="number" id="dKm" min="0.5" max="100" step="0.5" value="5" class="num"><span>ק"מ</span></div>
         <div class="nrow"><button type="button" class="btn" data-dist="pick">בחירה במפה</button><button type="button" class="btn ghost" data-dist="geo">המיקום שלי</button></div>
@@ -972,7 +973,7 @@ details.about p{margin:6px 0}
 <script>
 /* ===== Config ===== */
 document.documentElement.dir='rtl';document.documentElement.lang='he';
-const BUILD='2026-10-13 20:05';
+const BUILD='2026-10-13 22:05';
 const CFG={
   data:{base:'data/base.json',nbhd:'data/nbhd.json',sites:'data/sites.json',meta:'data/meta.json'},
   maxCompare:4, maxRows:400,
@@ -1034,14 +1035,17 @@ function byBloc(list,row){return BORDER.map(b=>{const g=list.filter(o=>D.parties
   return `<div class="bgrp"><i style="background:${bc(b)}"></i>${BLOCS[b].name}<span class="num">${pct(tot)}</span></div>`+g.map(row).join('')}).join('')}
 // list/legend scope: one town, a distance circle, or everything
 const distMode=()=>S.town==='__dist';
-function nbIn(p){if(distMode())return S.dist.pt?!!p._dIn:true;return !S.town||p.tcode===S.town}
-function townIn(t){if(distMode())return S.dist.pt?D.townHit.has(t.code):false;return !S.town||t.code===S.town}
-function scopeLabel(){if(distMode())return S.dist.pt?`ברדיוס ${S.dist.km} ק"מ`:'';return S.town?'בישוב':''}
+const viewMode=()=>S.town==='__view';
+// areas touching the current map view (bounds stored on every moveend while the map is visible)
+function inView(p){if(!S.viewB)return true;if(!p.lb)p.lb=p.layer.getBounds();return S.viewB.intersects(p.lb)}
+function nbIn(p){if(viewMode())return inView(p);if(distMode())return S.dist.pt?!!p._dIn:true;return !S.town||p.tcode===S.town}
+function townIn(t){if(viewMode())return D.viewTowns?D.viewTowns.has(t.code):false;if(distMode())return S.dist.pt?D.townHit.has(t.code):false;return !S.town||t.code===S.town}
+function scopeLabel(){if(viewMode())return 'בתצוגת המפה';if(distMode())return S.dist.pt?`ברדיוס ${S.dist.km} ק"מ`:'';return S.town?'בישוב':''}
 function partyLabel(){return [...S.pickParty].sort((a,b)=>a-b).map(i=>D.parties[i].name).join(' + ')}
 function hue(){return S.mode==='party'?(S.pickParty.size===1?pc(D.parties[[...S.pickParty][0]].k):(dark()?'#c58cf0':'#6a3fa0')):S.mode==='bloc'?bc(S.bloc):(dark()?'#5fc7b0':'#17785f')}
 function computeBreaks(){
   if(S.mode==='winner'||S.mode==='margin'){breaks=[];return}
-  const vals=D.nb.filter(f=>f.v&&nbIn(f)).map(f=>metric(f.v)).filter(x=>x!=null).sort((a,b)=>a-b);
+  const vals=D.nb.filter(f=>f.v&&(viewMode()||nbIn(f))).map(f=>metric(f.v)).filter(x=>x!=null).sort((a,b)=>a-b);
   const qs=[1/6,2/6,3/6,4/6,5/6].map(q=>vals[Math.floor(q*(vals.length-1))]);
   const step=S.mode==='turnout'?0.01:(vals[vals.length-1]>0.2?0.01:0.002);
   breaks=[...new Set(qs.map(x=>Math.round(x/step)*step))].filter(x=>x>0);
@@ -1102,7 +1106,7 @@ function initUI(){
   $('#bloc').onchange=e=>{S.bloc=e.target.value;render()};
   $('#showSites').onchange=e=>{S.showSites=e.target.checked;syncSites()};
   let qt;$('#q').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value.trim();renderList()},150)};
-  $('#town').onchange=e=>{S.town=e.target.value;$('#distRow').hidden=!distMode();drawDist();render();
+  $('#town').onchange=e=>{S.town=e.target.value;$('#distRow').hidden=!distMode();$('#viewNote').hidden=!viewMode();drawDist();if(viewMode()){S.viewB=map.getBounds();computeViewTowns()}render();
     if(S.town&&!distMode())select({type:'t',id:S.town},{fit:true});
     if(distMode()&&!S.dist.pt)distMsg('בחרו מיקום: הקשה על המפה, המיקום שלי, או קואורדינטות',true)};
   $('#distRow').addEventListener('click',e=>{const b=e.target.closest('[data-dist]');if(b)distAction(b.dataset.dist)});
@@ -1157,6 +1161,8 @@ function initMap(){
     const m=L.circleMarker([s.xy[1],s.xy[0]],{renderer:cv,radius:3,weight:1,fillOpacity:.95});
     m.on('click',e=>{L.DomEvent.stopPropagation(e);if(S.picking){onPick(e.latlng);return}openSite(s,m)});s.m=m;
   }
+  let vt;map.on('moveend',()=>{if(mob()&&S.tab!=='map')return;S.viewB=map.getBounds();
+    if(viewMode()){clearTimeout(vt);vt=setTimeout(()=>{computeViewTowns();renderList();renderFilters()},200)}});
   let zPrev=null;map.on('zoomend',()=>{syncLabels();syncSites();const far=map.getZoom()<10.5;if(far!==zPrev){zPrev=far;nbLayer.setStyle(nbStyle);styleTowns()}});
   map.on('click',e=>{if(S.picking)onPick(e.latlng)});
   const b=L.latLngBounds(D.sites.map(s=>[s.xy[1],s.xy[0]]));
@@ -1322,7 +1328,7 @@ function renderList(){
   const key=x=>{const m=metric(x.v);return S.mode==='winner'?(x.v[P0+m]/x.v[VA]):m};
   items.sort((a,b)=>(key(b)??-1)-(key(a)??-1));
   townItems.sort((a,b)=>b.v[VA]-a.v[VA]);
-  const all=((S.town&&(!distMode()||S.dist.pt))||q?townItems:[]).concat(items);
+  const all=((S.town&&!viewMode()&&(!distMode()||S.dist.pt))||q?townItems:[]).concat(items);
   D.lastList={towns:townItems,areas:items};
   const shown=all.slice(0,CFG.maxRows);
   $('#count').textContent=`${fmt(items.length)} שכונות ואזורים`+(filterActive()?' (מסונן)':'')+(all.length>shown.length?` · מוצגות ${fmt(shown.length)}, אפשר לצמצם בחיפוש או בבחירת ישוב`:'')+' · ממוין לפי '+(S.mode==='winner'?'שיעור המפלגה המובילה':'הערך במפה');
@@ -1454,6 +1460,7 @@ function parseCoord(str){const t=(str||'').replace(/[^\d.,\-\s]/g,' ');const n=t
 function endPick(){S.picking=false;$('#map').classList.remove('picking');$('#pickhint').hidden=true}
 function onPick(ll){const t=S.picking;if(t==='dist'){endPick();setDistPoint(ll)}else setNearPoint(ll)}
 /* ---- distance filter for the list */
+function computeViewTowns(){D.viewTowns=new Set();for(const p of D.nb)if(p.v&&p.tcode&&inView(p))D.viewTowns.add(p.tcode)}
 function distMsg(t,ok){const m=$('#dMsg');m.textContent=t||'';m.className='nmsg'+(ok?' ok':'')}
 function distAction(a){
   if(a==='pick'){S.picking='dist';$('#map').classList.add('picking');$('#pickhint').hidden=false;if(mob())setTab('map');distMsg('הקישו על המפה במרכז הרצוי',true);return}
@@ -1476,7 +1483,7 @@ function listMsg(t,ok){const m=$('#lMsg');m.textContent=t||'';m.className='nmsg'
 function rowData(kind,name,town,v,d){const b=blocShares(v),w=winner(v),sh=D.parties.map((p,i)=>({i,x:v[P0+i]/v[VA]})).filter(o=>D.parties[o.i].k!=='oth').sort((a,c)=>c.x-a.x);
   return{kind,name,town,d,elig:v[E],voters:v[VO],turn:v[E]?v[VO]/v[E]:null,valid:v[VA],coal:b.coal,opp:b.opp,arab:b.arab,margin:marginOf(v),
     w:D.parties[w].name,wk:D.parties[w].k,wx:v[P0+w]/v[VA],s2:sh[1]?D.parties[sh[1].i].name:'',s2x:sh[1]?sh[1].x:null,parties:D.parties.map((p,i)=>v[P0+i]/v[VA])}}
-function scopeText(){const p=[];if(distMode()&&S.dist.pt)p.push(`ברדיוס ${S.dist.km} ק"מ מ-${S.dist.pt.lat.toFixed(5)}, ${S.dist.pt.lng.toFixed(5)}`);
+function scopeText(){const p=[];if(viewMode()&&S.viewB){const b=S.viewB;p.push(`תצוגת המפה (${b.getSouth().toFixed(3)}–${b.getNorth().toFixed(3)}, ${b.getWest().toFixed(3)}–${b.getEast().toFixed(3)})`)}else if(distMode()&&S.dist.pt)p.push(`ברדיוס ${S.dist.km} ק"מ מ-${S.dist.pt.lat.toFixed(5)}, ${S.dist.pt.lng.toFixed(5)}`);
   else if(S.town&&!distMode())p.push('ישוב: '+D.towns[S.town].name);if(S.q)p.push('חיפוש: '+S.q);
   if(filterActive())p.push('סינון: '+filterText().replace(/<[^>]+>/g,''));return p.join(' · ')||'כל הארץ'}
 async function loadExcelJS(){if(window.ExcelJS)return window.ExcelJS;await new Promise((ok,no)=>{const s=document.createElement('script');s.src=CFG.exceljs;s.onload=ok;s.onerror=no;document.head.append(s)});return window.ExcelJS}
