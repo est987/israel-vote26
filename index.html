@@ -1,0 +1,1599 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="build" content="2026-10-13 20:05">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="תוצאות הבחירות לכנסת ה-25 לפי שכונות: אחוז הצבעה, מפלגה מובילה ושיעורי מפלגות וגושים.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>מפת הצבעה לפי שכונות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&family=Suez+One&display=swap">
+<style>
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: none;
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: none;
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: none;
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+/* Layout: three columns on desktop (list | map | detail), three full-height tabs on phone. */
+:root{
+  --bg:#ffffff; --panel:#ffffff; --ink:#1b2226; --muted:#5d6a70; --line:#d6dddc; --soft:#f4f6f5;
+  --accent:#0f6e8c; --accent-ink:#ffffff;
+  --sea:#ffffff; --water:#e3eef5; --land:#ffffff; --land-line:#b9c3c7; --town-line:#a3aeb1; --empty:#eef1f2; --ramp0:#f3f5f6;
+  --warn:#b3541e;
+  --f-display:"Suez One","Frank Ruhl Libre",Georgia,serif;
+  --f-body:"IBM Plex Sans Hebrew","Noto Sans Hebrew","Segoe UI",Arial,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+*{box-sizing:border-box}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:grid;grid-template-rows:auto auto 1fr;grid-template-columns:300px 1fr 380px;
+  grid-template-areas:"hd hd hd" "flt flt flt" "list map detail"}
+#filters{grid-area:flt;background:var(--soft);border-bottom:1px solid var(--line);padding:10px 16px;display:grid;gap:8px}
+.frow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--muted);font-weight:600;min-width:52px}
+#chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:12.5px;min-height:30px}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in srgb,var(--accent) 12%,var(--panel));font-weight:600}
+.chip.all{color:var(--accent);border-style:dashed}
+.flabel select{font-size:12px;padding:3px 6px;min-height:30px}
+.dual{position:relative;height:30px;flex:1;min-width:180px;max-width:440px;direction:ltr}
+.dual .rail{position:absolute;left:10px;right:10px;top:13px;height:4px;border-radius:2px;background:var(--line)}
+.dual .rail .sel{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:2px}
+.dual input{position:absolute;left:0;top:0;width:100%;height:30px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dual input::-webkit-slider-runnable-track{background:none;height:30px}
+.dual input::-moz-range-track{background:none}
+.dual input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:22px;height:22px;margin-top:4px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.dual input::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--panel);border:2px solid var(--accent);cursor:pointer}
+.dual input:focus-visible::-webkit-slider-thumb{outline:2px solid var(--accent);outline-offset:2px}
+.dv{font-weight:600;font-size:12.5px;min-width:76px;direction:ltr;text-align:right}
+#fapply.pending{box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 45%,transparent)}
+.fsum{font-size:12px;color:var(--muted)}
+#fbtn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
+#fbtn.on::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--warn);margin-inline-start:6px;vertical-align:middle}
+header{grid-area:hd;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 16px;
+  background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;line-height:1.1;text-wrap:balance}
+header .sub{color:var(--muted);font-size:12.5px}
+.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-inline-start:auto}
+.ctl label{font-size:12px;color:var(--muted)}
+select,input[type=search]{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:34px}
+.chk{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none}
+
+#list{grid-area:list;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-inline-end:1px solid var(--line)}
+#list .tools{padding:10px 12px;display:grid;gap:8px;border-bottom:1px solid var(--line)}
+#list .tools input,#list .tools select{width:100%}
+#list .count{font-size:12px;color:var(--muted)}
+.drow{display:grid;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:8px}
+.drow .nrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px}
+#list .tools .drow input[type=number]{width:80px;flex:none}
+#list .tools .drow input[type=text]{width:auto;flex:1}
+.drow input[type=text]{flex:1;min-width:0;direction:ltr;text-align:left}
+.drow input{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-height:32px}
+.lacts{display:flex;gap:6px;flex-wrap:wrap}
+.lacts .btn{min-height:30px;padding:4px 10px;font-size:12.5px}
+#rows{overflow-y:auto;flex:1;min-height:0}
+.row{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:hover{background:var(--soft)}
+.row.sel{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.row .sw{width:12px;height:12px;border-radius:3px}
+.row .nm{min-width:0}
+.row .nm b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nm small{color:var(--muted);font-size:11.5px}
+.row .val{font-size:13px;font-weight:600}
+.row.town .nm b{font-weight:700}
+.hint{padding:10px 12px;color:var(--muted);font-size:12px}
+
+#mapwrap{grid-area:map;position:relative;min-height:0}
+#map{position:absolute;inset:0;background:var(--sea)}
+.leaflet-container{font-family:var(--f-body);background:var(--sea)}
+#bm{position:absolute;top:10px;right:10px;z-index:500;display:flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#bm button{background:none;border:0;padding:6px 10px;min-height:32px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+#bm button+button{border-inline-start:1px solid var(--line)}
+#bm button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+#bmnote{position:absolute;top:52px;right:10px;z-index:500;max-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--warn)}
+#legend{position:absolute;bottom:12px;inset-inline-start:12px;z-index:500;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;max-width:260px;font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#legend .ttl{font-weight:600;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+#legend .scale{display:flex;direction:ltr}
+#legend .scale span{flex:1;height:10px}
+#legend .lbls{display:flex;justify-content:space-between;gap:4px;direction:ltr;color:var(--muted);font-size:10.5px;margin-top:2px}
+#legend .scope{color:var(--muted);font-size:11px;margin-top:4px}
+#legend .cats{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px}
+#legend .cats div{display:flex;gap:5px;align-items:center;white-space:nowrap}
+#legend .cats i{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none}
+#legend .note{color:var(--muted);margin-top:6px;display:grid;gap:3px}
+#legend .note i{display:inline-block;width:14px;height:10px;vertical-align:middle;margin-inline-end:4px;border-radius:2px}
+#legend.closed .body{display:none}
+.tlabel{background:none;border:0;box-shadow:none;color:var(--muted);font-weight:600;font-size:11.5px;text-shadow:0 0 3px var(--land),0 0 3px var(--land);padding:0}
+.tlabel::before{display:none}
+#map .leaflet-popup-content-wrapper,#map .leaflet-popup-tip{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+#map .leaflet-popup-content{margin:10px 12px;direction:rtl;text-align:right;font-size:13px;max-height:260px;overflow:auto}
+#map .leaflet-popup-content h4{margin:0 0 2px;font-size:14px}
+#map .leaflet-popup-content .m{color:var(--muted);font-size:12px}
+#map .leaflet-popup-content table{border-collapse:collapse;margin-top:6px;width:100%}
+#map .leaflet-popup-content td{padding:1px 0}
+#map .leaflet-popup-content td:last-child{text-align:left}
+#map .leaflet-control-zoom a,#map .leaflet-bar a{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#map .leaflet-control-attribution{background:color-mix(in srgb,var(--panel) 80%,transparent);color:var(--muted)}
+#map .leaflet-control-attribution a{color:var(--accent)}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:600;min-height:34px}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.tochart{margin-top:8px;display:none}
+
+#detail{grid-area:detail;overflow-y:auto;background:var(--panel);border-inline-start:1px solid var(--line);padding:16px;min-height:0}
+#detail h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;line-height:1.15;text-wrap:balance}
+#detail .where{color:var(--muted);margin-top:2px}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 16px;margin:14px 0}
+.kpi small{display:block;color:var(--muted);font-size:11.5px;letter-spacing:.02em}
+.kpi b{font-size:20px;font-weight:600}
+.sec{margin-top:18px}
+.sec h3{font-size:12px;letter-spacing:.06em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.bloc{display:flex;height:18px;border-radius:4px;overflow:hidden;direction:rtl}
+.bloc span{display:block;height:100%}
+.bloclbl{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin-top:6px}
+.bloclbl i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:4px;vertical-align:middle}
+.bars{display:grid;gap:5px}
+.bgrp{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-top:8px;padding-bottom:2px;border-bottom:1px solid var(--line)}
+.bgrp:first-child{margin-top:0}
+.bgrp i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.bgrp span{margin-inline-start:auto}
+.csep{flex-basis:100%;height:0}
+#legend .lgrp{font-size:11px;color:var(--muted);margin:4px 0 2px;font-weight:600}
+.bar{display:grid;grid-template-columns:96px 1fr 48px;gap:8px;align-items:center;font-size:12.5px}
+.bar .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .trk{position:relative;height:14px;background:var(--soft);border-radius:3px}
+.bar .fill{position:absolute;inset-block:0;inset-inline-start:0;border-radius:3px}
+.bar .mk{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.7}
+.bar .mk.nat{background:transparent;border-inline-start:2px dotted var(--ink);opacity:.55}
+.bar .pc{text-align:left;font-weight:600}
+.keyline{display:flex;gap:14px;font-size:11.5px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.keyline i{display:inline-block;width:2px;height:12px;background:var(--ink);opacity:.7;vertical-align:middle;margin-inline-end:5px}
+.keyline i.nat{background:transparent;border-inline-start:2px dotted var(--ink);opacity:.55}
+.qual{font-size:12px;color:var(--muted);background:var(--soft);border-radius:6px;padding:8px 10px;margin-top:14px}
+.qual.warn{color:var(--warn)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.actions a{color:var(--accent);font-size:13px;align-self:center}
+#cmp table{width:100%;border-collapse:collapse;font-size:12.5px}
+#cmp th,#cmp td{padding:4px 4px;border-bottom:1px solid var(--line);text-align:left}
+#cmp th:first-child,#cmp td:first-child{text-align:right}
+#cmp th{font-weight:600;font-size:12px;vertical-align:bottom}
+#cmp .x{cursor:pointer;color:var(--muted);border:0;background:none;padding:0 4px}
+.cmpwrap{overflow-x:auto}
+#nbtn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink)}
+.nearform{display:grid;gap:10px;margin-top:12px}
+.nearform .nrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.nearform input[type=text],.nearform input[type=number]{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-height:34px}
+.nearform input[type=text]{flex:1;min-width:0;direction:ltr;text-align:left}
+.nearform input[type=number]{width:80px}
+.nearform .lbl{font-size:12px;color:var(--muted);width:100%}
+.nmsg{font-size:12.5px;color:var(--warn)}
+.nmsg.ok{color:var(--accent)}
+.nres{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+.nres th{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;padding:4px;border-bottom:1px solid var(--line)}
+.nres td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.nres tr[data-goto]{cursor:pointer}
+.nres tr[data-goto]:hover{background:var(--soft)}
+.nres .rk{font-weight:700;color:var(--accent)}
+.nres small{display:block;color:var(--muted);font-size:11px}
+.nres .mg{display:inline-block;width:8px;height:8px;border-radius:2px;margin-inline-end:4px;vertical-align:middle}
+#copybox{width:100%;min-height:120px;font-size:12px;direction:rtl}
+.nlabel{background:var(--accent);color:var(--accent-ink);border-radius:10px;font-size:11px;font-weight:700;padding:1px 6px;border:1.5px solid var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.25);white-space:nowrap;text-align:center}
+#pickhint{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:600;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+#map.picking{cursor:crosshair}
+details.about{margin-top:20px;font-size:12.5px;color:var(--muted)}
+details.about summary{cursor:pointer;color:var(--ink);font-weight:600}
+details.about p{margin:6px 0}
+.empty{color:var(--muted);padding:30px 0;text-align:center}
+#tabs{display:none}
+#status{position:absolute;inset:0;display:grid;place-items:center;z-index:600;background:var(--sea);color:var(--muted);font-size:15px}
+
+@media (max-width:700px),(max-height:500px) and (max-width:950px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto;grid-template-areas:"hd" "flt" "main" "tabs"}
+  #filters{padding:8px 12px;max-height:46vh;overflow-y:auto}
+  .frow{flex-wrap:wrap}
+  .dual{min-width:0;flex:1 1 200px;max-width:none}
+  .flabel{min-width:100%}
+  .chip{min-height:36px;font-size:13.5px}
+  header{padding:8px 12px;gap:8px}
+  header h1{font-size:18px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  header .sub{display:none}
+  .ctl{margin:0;width:100%}
+  .ctl label:not(.chk){display:none}
+  .ctl .chk{flex:none}
+  .ctl select{flex:1;min-width:0}
+  select,input[type=search]{font-size:16px;min-height:40px}
+  #list,#mapwrap,#detail{grid-area:main;display:none!important}
+  #app[data-tab="list"] #list{display:flex!important}
+  #app[data-tab="map"] #mapwrap{display:block!important}
+  #app[data-tab="detail"] #detail{display:block!important}
+  #detail,#list{border:0}
+  #tabs{grid-area:tabs;display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+  #tabs button{background:none;border:0;padding:12px 0;min-height:48px;font-weight:600;color:var(--muted)}
+  #tabs button[aria-selected="true"]{color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+  .row{padding:10px 12px}
+  #legend{bottom:8px;inset-inline-start:8px;max-width:200px}
+  .tochart{display:inline-block}
+  .bar{grid-template-columns:84px 1fr 44px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div id="app" data-tab="map" dir="rtl" lang="he">
+  <header>
+    <div>
+      <h1>מפת הצבעה לפי שכונות</h1>
+      <div class="sub">הבחירות לכנסת ה-25, 1.11.2022 · תוצאות לפי קלפי, משויכות לשכונות</div>
+    </div>
+    <div class="ctl">
+      <label for="mode">צביעה לפי</label>
+      <select id="mode" aria-label="צביעה לפי">
+        <option value="margin">רוב גושים</option>
+        <option value="winner">המפלגה המובילה</option>
+        <option value="turnout">אחוז הצבעה</option>
+        <option value="party">שיעור מפלגה</option>
+        <option value="bloc">שיעור גוש</option>
+      </select>
+      <button type="button" class="btn ghost" id="fbtn" aria-expanded="false" aria-controls="filters">סינון</button>
+      <select id="bloc" aria-label="גוש" hidden>
+        <option value="coal">גוש הקואליציה</option>
+        <option value="opp">גוש האופוזיציה</option>
+        <option value="arab">מפלגות ערביות</option>
+      </select>
+      <button type="button" class="btn ghost" id="nbtn">שכונות קרובות</button>
+      <label class="chk"><input type="checkbox" id="showSites"> קלפיות</label>
+    </div>
+  </header>
+
+  <section id="filters" hidden aria-label="סינון">
+    <div class="frow" id="chipsRow">
+      <div class="flabel" id="chipsLabel">מפלגות</div>
+      <div id="chips" role="group" aria-labelledby="chipsLabel"></div>
+    </div>
+    <div class="frow">
+      <div class="flabel">אחוז הצבעה</div>
+      <div class="dual" id="fT"><div class="rail"><span class="sel"></span></div><input type="range" class="lo" min="0" max="100" step="1" value="0" aria-label="אחוז הצבעה מינימלי"><input type="range" class="hi" min="0" max="100" step="1" value="100" aria-label="אחוז הצבעה מקסימלי"></div>
+      <output class="dv num" id="fTv">0%–100%</output>
+    </div>
+    <div class="frow">
+      <div class="flabel"><select id="fBloc" aria-label="גוש לסינון"><option value="coal">גוש הקואליציה</option><option value="opp">גוש האופוזיציה</option><option value="arab">מפלגות ערביות</option></select></div>
+      <div class="dual" id="fB"><div class="rail"><span class="sel"></span></div><input type="range" class="lo" min="0" max="100" step="1" value="0" aria-label="שיעור גוש מינימלי"><input type="range" class="hi" min="0" max="100" step="1" value="100" aria-label="שיעור גוש מקסימלי"></div>
+      <output class="dv num" id="fBv">0%–100%</output>
+    </div>
+    <div class="frow">
+      <button type="button" class="btn" id="fapply">עדכן</button>
+      <button type="button" class="btn ghost" id="freset">איפוס</button>
+      <span class="fsum" id="fsum"></span>
+    </div>
+  </section>
+
+  <aside id="list" aria-label="רשימת שכונות">
+    <div class="tools">
+      <input type="search" id="q" placeholder="חיפוש שכונה או ישוב" aria-label="חיפוש">
+      <select id="town" aria-label="ישוב"><option value="">כל הישובים</option><option value="__dist">לפי מרחק ממיקום…</option></select>
+      <div id="distRow" class="drow" hidden>
+        <div class="nrow"><label for="dKm">רדיוס</label><input type="number" id="dKm" min="0.5" max="100" step="0.5" value="5" class="num"><span>ק"מ</span></div>
+        <div class="nrow"><button type="button" class="btn" data-dist="pick">בחירה במפה</button><button type="button" class="btn ghost" data-dist="geo">המיקום שלי</button></div>
+        <div class="nrow"><input type="text" id="dCoord" inputmode="decimal" placeholder="32.0853, 34.7818" aria-label="קואורדינטות"><button type="button" class="btn ghost" data-dist="coord">הצב</button></div>
+        <div class="nmsg" id="dMsg"></div>
+      </div>
+      <div class="count" id="count"></div>
+      <div class="lacts"><button type="button" class="btn ghost" id="expX">ייצוא לאקסל</button><button type="button" class="btn ghost" id="copyT">העתקת ישובים ל-Word</button></div>
+      <div class="nmsg" id="lMsg"></div>
+    </div>
+    <div id="rows"></div>
+  </aside>
+
+  <main id="mapwrap">
+    <div id="map" dir="ltr"></div>
+    <div id="legend"></div>
+    <div id="bm" role="group" aria-label="רקע מפה"><button type="button" data-bm="outline" aria-pressed="true">קווי מתאר</button><button type="button" data-bm="osm" aria-pressed="false">מפה</button><button type="button" data-bm="sat" aria-pressed="false">לוויין</button></div>
+    <div id="bmnote" hidden></div>
+    <div id="pickhint" hidden>הקישו על המפה לבחירת מיקום</div>
+    <div id="status">טוען נתונים…</div>
+  </main>
+
+  <section id="detail" aria-live="polite"></section>
+
+  <nav id="tabs" role="tablist">
+    <button data-tab="list" role="tab">רשימה</button>
+    <button data-tab="map" role="tab" aria-selected="true">מפה</button>
+    <button data-tab="detail" role="tab">פרטים</button>
+  </nav>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ===== Config ===== */
+document.documentElement.dir='rtl';document.documentElement.lang='he';
+const BUILD='2026-10-13 20:05';
+const CFG={
+  data:{base:'data/base.json',nbhd:'data/nbhd.json',sites:'data/sites.json',meta:'data/meta.json'},
+  maxCompare:4, maxRows:400,
+  exceljs:'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js', // loaded only when exporting
+  // Basemaps without API keys. Outside hosts are blocked in the Claude artifact viewer; they work on any normal web host.
+  basemaps:{
+    osm:{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',max:19,fill:.62},
+    sat:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',attr:'Imagery © Esri, Maxar, Earthstar Geographics',max:19,fill:.55}
+  }
+};
+// Vote vector layout: [eligible, voters, invalid, valid, party_0 … party_12]
+const E=0,VO=1,VA=3,P0=4;
+const PCOL={ // [light, dark] — colour family follows the bloc: coalition warm reds, opposition blues, Arab parties greens
+ 'מחל':['#c1121f','#ef4e5a'],'ט':['#f08c1a','#f7a54a'],'שס':['#6d0f22','#93243a'],'ג':['#e0569b','#f08fbf'],
+ 'פה':['#1f78c8','#3d8fe0'],'כן':['#7cc4ec','#8fe0f5'],'ל':['#0b2f6b','#c9d3ff'],'אמת+מרצ':['#6a4fc2','#9b7bf0'],
+ 'עם':['#1b7a3a','#3fae5f'],'ום':['#7cc46a','#b5e08a'],'ד':['#0e8f86','#3fc9be'],
+ 'ב':['#5f8f9f','#7fa7b8'],'oth':['#bcbcbc','#6e6e6e']};
+const BLOCS={coal:{name:'גוש הקואליציה',c:['#c0392b','#e8705f']},opp:{name:'גוש האופוזיציה',c:['#2166ac','#5b9bd5']},
+  arab:{name:'מפלגות ערביות',c:['#2f8a3f','#5dbd6c']},other:{name:'אחרים',c:['#9a9a9a','#7a7a7a']}};
+
+/* ===== Helpers ===== */
+const $=s=>document.querySelector(s);
+const fmt=n=>n.toLocaleString('he-IL');
+const pct=(x,d=1)=>x==null||isNaN(x)?'—':(x*100).toFixed(d)+'%';
+const mob=()=>matchMedia('(max-width:700px),(max-height:500px) and (max-width:950px)').matches;
+const dark=()=>false; // single light theme: white page and map by design
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pc=k=>PCOL[k][dark()?1:0];
+const bc=b=>BLOCS[b].c[dark()?1:0];
+function hex2rgb(h){h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16))}
+function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return'#'+A.map((x,i)=>Math.round(x+(B[i]-x)*t).toString(16).padStart(2,'0')).join('')}
+const add=(a,b)=>a?a.map((x,i)=>x+b[i]):b.slice();
+
+/* ===== State ===== */
+const S={mode:'margin',f:{tmin:0,tmax:100,bloc:'coal',bmin:0,bmax:100},near:{pt:null,n:10,pseudo:true,onlyF:true,res:[]},dist:{pt:null,km:5},view:'main',picking:false,pickParty:new Set([0]),pickWin:null,bloc:'coal',showSites:false,basemap:'outline',sel:null,town:'',q:'',pins:[],tab:'map',pendingFit:null};
+let D,map,nbLayer,siteLayer,townLabels=[],breaks=[],legendOpen=!matchMedia('(max-width:700px),(max-height:500px) and (max-width:950px)').matches;
+
+/* ===== Metrics ===== */
+function blocShares(v){const o={coal:0,opp:0,arab:0,other:0};D.parties.forEach((p,i)=>o[p.bloc]+=v[P0+i]);for(const k in o)o[k]/=v[VA]||1;return o}
+function winner(v){let bi=0;for(let i=1;i<D.parties.length-1;i++)if(v[P0+i]>v[P0+bi])bi=i;return bi}
+function metric(v){
+  if(!v||!v[VA])return null;
+  if(S.mode==='turnout')return v[E]?v[VO]/v[E]:null;
+  if(S.mode==='party'){let x=0;for(const i of S.pickParty)x+=v[P0+i];return x/v[VA]}
+  if(S.mode==='bloc')return blocShares(v)[S.bloc];
+  if(S.mode==='margin')return marginOf(v);
+  return winner(v);
+}
+// coalition minus everyone who was not in it (opposition + Arab parties), as a share of valid votes
+function marginOf(v){const b=blocShares(v);return b.coal-(b.opp+b.arab)}
+const MSTEPS=[0.1,0.25,0.5];
+const MCOL={coal:['#fbd5c6','#f19a7e','#d6604d','#a51c2b'],opp:['#d4e6f2','#92c5de','#4393c3','#1d5f9f']};
+function marginColor(m){let c=0;while(c<MSTEPS.length&&Math.abs(m)>=MSTEPS[c])c++;return MCOL[m>=0?'coal':'opp'][c]}
+function marginText(m){return (m>=0?'קואליציה +':'אופוזיציה +')+(Math.abs(m)*100).toFixed(1)}
+const BORDER=['coal','opp','arab','other'];
+// party rows grouped under bloc headings; list items carry .i (party index) and .x (share)
+function byBloc(list,row){return BORDER.map(b=>{const g=list.filter(o=>D.parties[o.i].bloc===b);if(!g.length)return'';
+  const tot=g.reduce((a,o)=>a+o.x,0);
+  return `<div class="bgrp"><i style="background:${bc(b)}"></i>${BLOCS[b].name}<span class="num">${pct(tot)}</span></div>`+g.map(row).join('')}).join('')}
+// list/legend scope: one town, a distance circle, or everything
+const distMode=()=>S.town==='__dist';
+function nbIn(p){if(distMode())return S.dist.pt?!!p._dIn:true;return !S.town||p.tcode===S.town}
+function townIn(t){if(distMode())return S.dist.pt?D.townHit.has(t.code):false;return !S.town||t.code===S.town}
+function scopeLabel(){if(distMode())return S.dist.pt?`ברדיוס ${S.dist.km} ק"מ`:'';return S.town?'בישוב':''}
+function partyLabel(){return [...S.pickParty].sort((a,b)=>a-b).map(i=>D.parties[i].name).join(' + ')}
+function hue(){return S.mode==='party'?(S.pickParty.size===1?pc(D.parties[[...S.pickParty][0]].k):(dark()?'#c58cf0':'#6a3fa0')):S.mode==='bloc'?bc(S.bloc):(dark()?'#5fc7b0':'#17785f')}
+function computeBreaks(){
+  if(S.mode==='winner'||S.mode==='margin'){breaks=[];return}
+  const vals=D.nb.filter(f=>f.v&&nbIn(f)).map(f=>metric(f.v)).filter(x=>x!=null).sort((a,b)=>a-b);
+  const qs=[1/6,2/6,3/6,4/6,5/6].map(q=>vals[Math.floor(q*(vals.length-1))]);
+  const step=S.mode==='turnout'?0.01:(vals[vals.length-1]>0.2?0.01:0.002);
+  breaks=[...new Set(qs.map(x=>Math.round(x/step)*step))].filter(x=>x>0);
+}
+function colorFor(v){
+  const m=metric(v); if(m==null)return null;
+  if(S.mode==='winner')return pc(D.parties[m].k);
+  if(S.mode==='margin')return marginColor(m);
+  let c=0;while(c<breaks.length&&m>=breaks[c])c++;
+  return mix(css('--ramp0')||'#eeeeee',hue(),0.12+0.88*c/Math.max(1,breaks.length));
+}
+
+/* ===== Boot ===== */
+async function boot(){
+  try{
+    const [base,nb,sites,meta]=await Promise.all(Object.values(CFG.data).map(u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+' '+r.status);return r.json()})));
+    D={base,nbFC:nb,sites,meta,parties:meta.parties,towns:meta.towns};
+    prep(); initUI(); initMap(); render();
+    $('#status').hidden=true;
+  }catch(e){console.error(e);$('#status').textContent='טעינת הנתונים נכשלה: '+e.message}
+}
+function prep(){
+  D.nb=D.nbFC.features.map(f=>Object.assign(f.properties,{f}));
+  D.nbSites={};D.nbTownVotes={};
+  for(const s of D.sites){
+    s.voters=s.v[VO];
+    if(s.n!=null){(D.nbSites[s.n]||(D.nbSites[s.n]=[])).push(s);const tv=D.nbTownVotes[s.n]||(D.nbTownVotes[s.n]={});tv[s.t]=(tv[s.t]||0)+s.v[VA]}
+  }
+  for(const p of D.nb){const tv=D.nbTownVotes[p.i];p.tcode=tv?Object.entries(tv).sort((a,b)=>b[1]-a[1])[0][0]:null;
+    p.boxes=(D.nbSites[p.i]||[]).reduce((a,s)=>a+s.boxes.length,0)}
+  for(const p of D.nb){p.c=centroid(p.f.geometry)}
+  D.townSites={};for(const s of D.sites)(D.townSites[s.t]||(D.townSites[s.t]=[])).push(s);
+  for(const [c,t] of Object.entries(D.towns)){t.code=c;t.name=t.name.replace(/\s+/g,' ').trim();t.boxes=(D.townSites[c]||[]).reduce((a,s)=>a+s.boxes.length,0)+0}
+  // national excl. double envelopes is not shown; national incl. is the official result
+  D.natShares=D.parties.map((p,i)=>D.meta.national[P0+i]/D.meta.national[VA]);
+}
+
+/* ===== UI ===== */
+function initUI(){
+  S.pickWin=new Set(D.parties.map((p,i)=>i).filter(i=>D.parties[i].k!=='oth'));
+  const ts=$('#town');Object.values(D.towns).filter(t=>t.v&&t.v[VA]>0).sort((a,b)=>b.v[VA]-a.v[VA]).forEach(t=>ts.add(new Option(t.name,t.code)));
+  $('#mode').onchange=e=>{S.mode=e.target.value;$('#bloc').hidden=S.mode!=='bloc';
+    if(S.mode==='party')openFilters(true);render()};
+  $('#fbtn').onclick=()=>openFilters($('#filters').hidden);
+  $('#chips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
+    const set=S.mode==='party'?S.pickParty:S.pickWin;
+    if(c.dataset.all!=null){if(S.mode==='party')return;const all=set.size===12;set.clear();if(!all)D.parties.forEach((p,i)=>{if(p.k!=='oth')set.add(i)})}
+    else{const i=+c.dataset.i;if(set.has(i)){if(S.mode==='party'&&set.size===1)return;set.delete(i)}else set.add(i)}
+    render()});
+  ['fT','fB'].forEach(id=>{const w=$('#'+id),lo=w.querySelector('.lo'),hi=w.querySelector('.hi');
+    const upd=ev=>{if(+lo.value>+hi.value){if(ev&&ev.target===lo)hi.value=lo.value;else lo.value=hi.value}paintDual(id);markPending()};
+    lo.addEventListener('input',upd);hi.addEventListener('input',upd)});
+  $('#fBloc').onchange=markPending;
+  $('#fapply').onclick=applyFilters;
+  $('#freset').onclick=()=>{S.f={tmin:0,tmax:100,bloc:S.f.bloc,bmin:0,bmax:100};S.pickWin=new Set(D.parties.map((p,i)=>i).filter(i=>D.parties[i].k!=='oth'));if(S.mode==='party')S.pickParty=new Set([0]);render()};
+  $('#nbtn').onclick=()=>openNear();
+  $('#detail').addEventListener('change',onNearChange);
+  $('#bloc').onchange=e=>{S.bloc=e.target.value;render()};
+  $('#showSites').onchange=e=>{S.showSites=e.target.checked;syncSites()};
+  let qt;$('#q').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value.trim();renderList()},150)};
+  $('#town').onchange=e=>{S.town=e.target.value;$('#distRow').hidden=!distMode();drawDist();render();
+    if(S.town&&!distMode())select({type:'t',id:S.town},{fit:true});
+    if(distMode()&&!S.dist.pt)distMsg('בחרו מיקום: הקשה על המפה, המיקום שלי, או קואורדינטות',true)};
+  $('#distRow').addEventListener('click',e=>{const b=e.target.closest('[data-dist]');if(b)distAction(b.dataset.dist)});
+  $('#dKm').addEventListener('change',e=>{S.dist.km=Math.max(0.5,Math.min(100,parseFloat(e.target.value)||5));e.target.value=S.dist.km;if(S.dist.pt){computeDist();drawDist(true);render()}});
+  $('#expX').onclick=exportList;
+  $('#copyT').onclick=copyTowns;
+  $('#rows').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r)return;
+    select({type:r.dataset.type,id:r.dataset.id},{fit:true});if(mob())setTab('detail')});
+  $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTab(b.dataset.tab)});
+  $('#legend').addEventListener('click',e=>{if(e.target.closest('.ttl')){legendOpen=!legendOpen;renderLegend()}});
+  $('#detail').addEventListener('click',e=>{
+    const na=e.target.closest('[data-near]');if(na){nearAction(na.dataset.near);return}
+    const pin=e.target.closest('[data-pin]');if(pin){togglePin(pin.dataset.pin);return}
+    const x=e.target.closest('[data-unpin]');if(x){S.pins=S.pins.filter(p=>p!==x.dataset.unpin);renderDetail();return}
+    const go=e.target.closest('[data-goto]');if(go){const[t,id]=go.dataset.goto.split(':');select({type:t,id},{fit:true});if(mob())setTab('map')}
+  });
+  document.addEventListener('click',e=>{const b=e.target.closest('.tochart');if(b){setTab('detail')}});
+  const re=()=>{if(D)render()};
+  $('#bm').addEventListener('click',e=>{const b=e.target.closest('[data-bm]');if(b)setBasemap(b.dataset.bm)});
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',re);
+  new MutationObserver(re).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  addEventListener('resize',()=>map&&map.invalidateSize());
+}
+function setTab(t){
+  S.tab=t;$('#app').dataset.tab=t;
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  if(t==='map'&&map){map.invalidateSize();if(S.pendingFit){const b=S.pendingFit;S.pendingFit=null;map.fitBounds(b,{maxZoom:14,padding:[20,20]})}}
+}
+
+/* ===== Map ===== */
+function initMap(){
+  const cv=L.canvas({padding:0.5,tolerance:4});
+  map=L.map('map',{renderer:cv,zoomControl:true,attributionControl:true,minZoom:7,maxZoom:17,zoomSnap:0.5,preferCanvas:true});
+  map.attributionControl.setPrefix(false).addAttribution('ועדת הבחירות המרכזית · מפ"י · Natural Earth');
+  map.createPane('base');map.getPane('base').style.zIndex=250;
+  D.baseLayers=[
+    L.geoJSON(D.base.land,{pane:'base',interactive:false,style:()=>({fillColor:css('--land'),fillOpacity:1,color:css('--land-line'),weight:1})}),
+    L.geoJSON(D.base.lakes,{pane:'base',interactive:false,style:()=>({fillColor:css('--water'),fillOpacity:1,color:css('--land-line'),weight:.8})})
+  ];
+  D.baseLayers.forEach(l=>l.addTo(map));
+  let saved=null;try{saved=localStorage.getItem('ivm-basemap')}catch(e){}
+  if(saved&&CFG.basemaps[saved])setTimeout(()=>setBasemap(saved,true),0);
+  nbLayer=L.geoJSON(D.nbFC,{renderer:cv,style:nbStyle,onEachFeature:(f,l)=>{f.properties.layer=l;
+    l.on('click',e=>{L.DomEvent.stopPropagation(e);if(S.picking){onPick(e.latlng);return}select({type:'n',id:String(f.properties.i)},{popup:e.latlng})})}}).addTo(map);
+  D.townLine=L.geoJSON(D.base.towns,{renderer:cv,interactive:false,style:()=>({fill:false,color:css('--town-line'),weight:1.2})}).addTo(map);
+  for(const t of D.base.towns){
+    const m=L.marker([t.properties.ly,t.properties.lx],{interactive:false,opacity:0,icon:L.divIcon({className:'',html:'',iconSize:[0,0]})});
+    m.bindTooltip(t.properties.t,{permanent:true,direction:'center',className:'tlabel'});m._myArea=t.properties.a;townLabels.push(m);
+  }
+  siteLayer=L.layerGroup().addTo(map);
+  for(const s of D.sites){
+    const m=L.circleMarker([s.xy[1],s.xy[0]],{renderer:cv,radius:3,weight:1,fillOpacity:.95});
+    m.on('click',e=>{L.DomEvent.stopPropagation(e);if(S.picking){onPick(e.latlng);return}openSite(s,m)});s.m=m;
+  }
+  let zPrev=null;map.on('zoomend',()=>{syncLabels();syncSites();const far=map.getZoom()<10.5;if(far!==zPrev){zPrev=far;nbLayer.setStyle(nbStyle);styleTowns()}});
+  map.on('click',e=>{if(S.picking)onPick(e.latlng)});
+  const b=L.latLngBounds(D.sites.map(s=>[s.xy[1],s.xy[0]]));
+  map.fitBounds(b,{padding:[10,10]});
+  syncLabels();
+}
+function setBasemap(k,quiet){
+  if(D.tileLayer){map.removeLayer(D.tileLayer);D.tileLayer=null}
+  clearTimeout(D.bmTimer);$('#bmnote').hidden=true;
+  S.basemap=k;try{localStorage.setItem('ivm-basemap',k)}catch(e){}
+  document.querySelectorAll('#bm button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.bm===k));
+  if(k==='outline'){D.baseLayers.forEach(l=>{if(!map.hasLayer(l))l.addTo(map)})}
+  else{
+    const c=CFG.basemaps[k];let ok=false;
+    D.tileLayer=L.tileLayer(c.url,{attribution:c.attr,maxZoom:c.max,maxNativeZoom:c.max,crossOrigin:false}).on('tileload',()=>{ok=true}).addTo(map);
+    D.baseLayers.forEach(l=>map.removeLayer(l));
+    D.bmTimer=setTimeout(()=>{if(!ok&&S.basemap===k){setBasemap('outline');const n=$('#bmnote');n.textContent='רקע המפה לא נטען בתצוגה הזו. הוא יעבוד כשהאתר מתארח בשרת רגיל (למשל Netlify).';n.hidden=false;D.bmTimer=setTimeout(()=>{n.hidden=true},7000)}},4000);
+  }
+  if(nbLayer)nbLayer.setStyle(nbStyle);
+  styleTowns();
+}
+function styleTowns(){if(D.townLine){const k=S.basemap,far=map&&map.getZoom()<10.5;D.townLine.setStyle({fill:false,color:k==='sat'?'#ffffff':css('--town-line'),weight:k==='sat'?1.4:1.2,opacity:far?0:(k==='sat'?.8:1)})}}
+// Leaflet merges styles, so every style must say whether it has a stroke
+function nbStyle(f){const o=nbStyle0(f);if(o.stroke===undefined)o.stroke=true;
+  if(map&&map.getZoom()<10.5&&!(S.sel&&S.sel.type==='n'&&S.sel.id===String(f.properties.i)))o.stroke=false;return o}
+function nbStyle0(f){
+  const p=f.properties,c=colorFor(p.v),sel=S.sel&&S.sel.type==='n'&&S.sel.id===String(p.i);
+  const unc=p.v&&p.unc/p.v[VA]>0.3;
+  const tiles=S.basemap!=='outline';
+  if(!c)return{fillColor:css('--empty'),fillOpacity:tiles?.12:.7,color:css('--land-line'),weight:.6,dashArray:null};
+  if(filterActive()&&!passes(p.v))return{fillColor:css('--empty'),fillOpacity:tiles?.1:.45,color:sel?css('--ink'):css('--land-line'),weight:sel?3:.5,dashArray:null};
+  if(p.pseudo)return{fillColor:c,fillOpacity:(tiles?CFG.basemaps[S.basemap].fill:.82)*.85,color:sel?css('--ink'):css('--muted'),weight:sel?3:1,dashArray:sel?null:'1 3'};
+  return{fillColor:c,fillOpacity:tiles?CFG.basemaps[S.basemap].fill:.82,color:sel?css('--ink'):(unc?css('--warn'):css('--panel')),weight:sel?3:(unc?1.4:.6),dashArray:unc&&!sel?'4 3':null};
+}
+function siteStyle(s){
+  const c=colorFor(s.v)||'#999';const z=map.getZoom();
+  const r=z<9?1.6:Math.max(2.2,Math.min(10,Math.sqrt(s.voters)/(z>=13?4.5:z>=11?7:10)));
+  return{radius:r,fillColor:c,color:css('--ink'),opacity:.55,weight:z>=12?1.2:.6,fillOpacity:.95};
+}
+function syncSites(){
+  if(!map)return;
+  const on=S.showSites,fa=filterActive();
+  for(const s of D.sites){
+    if(on&&(!fa||passes(s.v))){s.m.setStyle(siteStyle(s));s.m.setRadius(siteStyle(s).radius);if(!s._myOn){siteLayer.addLayer(s.m);s._myOn=true}}
+    else if(s._myOn){siteLayer.removeLayer(s.m);s._myOn=false}
+  }
+}
+function syncLabels(){
+  const z=map.getZoom();
+  for(const m of townLabels){const show=z>=11||(z>=9.5&&m._myArea>0.6)||(z>=8.5&&m._myArea>2.5);
+    if(show&&!m._myOn){m.addTo(map);m._myOn=true}else if(!show&&m._myOn){map.removeLayer(m);m._myOn=false}}
+}
+const CONF={exact:'מדויק — אותה קלפי ברשימת 2026',k24:'טוב — כתובת הקלפי מבחירות 2021',base:'משוער — לפי מספר קלפי בסיסי',cluster:'משוער — לפי קוד ריכוז'};
+function openSite(s,m){
+  const v=s.v,sh=D.parties.map((p,i)=>[p,v[P0+i]/v[VA]]).filter(x=>x[0].k!=='oth').sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const t=D.towns[s.t];
+  const el=document.createElement('div');
+  el.innerHTML=`<h4></h4><div class="m"></div><div class="m num"></div><table class="num"></table><div class="m" style="margin-top:6px"></div>`;
+  el.querySelector('h4').textContent=s.name||'אתר קלפי';
+  el.querySelectorAll('.m')[0].textContent=[s.addr,t&&t.name].filter(Boolean).join(', ');
+  el.querySelectorAll('.m')[1].textContent=`קלפיות ${s.boxes.join(', ')} · הצבעה ${pct(v[VO]/v[E])} · ${fmt(v[VA])} קולות כשרים`;
+  const tb=el.querySelector('table');
+  for(const [p,x] of sh){const tr=tb.insertRow();const a=tr.insertCell(),b=tr.insertCell();a.innerHTML='<i style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-inline-end:5px;background:'+pc(p.k)+'"></i>';a.append(p.name);b.textContent=pct(x)}
+  el.querySelectorAll('.m')[2].textContent='דיוק מיקום: '+CONF[s.conf]+(s.unc?' · שיוך לשכונה לא ודאי':'');
+  if(s.n!=null){const b=document.createElement('button');b.className='btn ghost';b.style.marginTop='8px';b.textContent='לשכונה';
+    b.onclick=()=>{select({type:'n',id:String(s.n)});if(mob())setTab('detail')};el.append(b)}
+  m.bindPopup(el,{maxWidth:Math.min(300,innerWidth-56),autoPanPadding:[20,20]}).openPopup();
+}
+
+/* ===== Selection ===== */
+function entity(sel){
+  if(!sel)return null;
+  if(sel.type==='n'){const p=D.nb[+sel.id];return{type:'n',id:sel.id,name:p.name||'שכונה ללא שם',where:p.town,v:p.v,p,
+    town:p.tcode?D.towns[p.tcode]:null,boxes:p.boxes,sites:p.sites,unc:p.unc,exact:p.exact,pseudo:!!p.pseudo}}
+  if(sel.type==='t'){const t=D.towns[sel.id];if(!t)return null;return{type:'t',id:sel.id,name:t.name,where:'כל הישוב',v:t.v,t,boxes:t.boxes,sites:(D.townSites[sel.id]||[]).length}}
+}
+function select(sel,opt={}){
+  const prev=S.sel;S.sel=sel;S.view='main';$('#nbtn').setAttribute('aria-expanded','false');
+  if(prev&&prev.type==='n'){const l=D.nb[+prev.id].layer;l&&l.setStyle(nbStyle(l.feature))}
+  if(sel.type==='n'){const l=D.nb[+sel.id].layer;l.setStyle(nbStyle(l.feature));l.bringToFront();
+    if(opt.fit)fit(l.getBounds());
+    if(opt.popup){const p=D.nb[+sel.id],el=document.createElement('div');
+      el.innerHTML='<h4></h4><div class="m"></div><div class="num"></div><button class="btn tochart">לפרטים</button>';
+      el.querySelector('h4').textContent=p.name||'שכונה';el.querySelector('.m').textContent=p.town;
+      el.querySelector('.num').textContent=p.v?legendValue(p.v):'אין קלפי בשטח השכונה';
+      L.popup({maxWidth:Math.min(260,innerWidth-56),autoPanPadding:[20,20]}).setLatLng(opt.popup).setContent(el).openOn(map)}
+  }else if(sel.type==='t'&&opt.fit){const ss=D.townSites[sel.id]||[];if(ss.length)fit(L.latLngBounds(ss.map(s=>[s.xy[1],s.xy[0]])))}
+  renderDetail();markRows();
+}
+function fit(b){if(mob()&&S.tab!=='map'){S.pendingFit=b;return}map.fitBounds(b,{maxZoom:14,padding:[24,24]})}
+function legendValue(v){const m=metric(v);if(m==null)return'—';
+  if(S.mode==='winner'){return D.parties[m].name+' · '+pct(v[P0+m]/v[VA])}
+  if(S.mode==='margin')return marginText(m)
+  return (S.mode==='turnout'?'אחוז הצבעה ':S.mode==='party'?partyLabel()+' ':BLOCS[S.bloc].name+' ')+pct(m)}
+
+/* ===== Render ===== */
+function render(){computeBreaks();if(nbLayer)nbLayer.setStyle(nbStyle);
+  if(D.baseLayers)D.baseLayers.forEach(l=>l.setStyle(l.options.style));styleTowns();
+  syncSites();renderFilters();renderLegend();renderList();renderDetail()}
+function openFilters(open){$('#filters').hidden=!open;$('#fbtn').setAttribute('aria-expanded',open);setTimeout(()=>map&&map.invalidateSize(),0)}
+function filterActive(){const f=S.f;return f.tmin>0||f.tmax<100||f.bmin>0||f.bmax<100||(S.mode==='winner'&&S.pickWin.size<12)}
+function passes(v){
+  if(!v||!v[VA])return false;const f=S.f;
+  const t=v[E]?v[VO]/v[E]*100:null;
+  if(t!=null&&(t<f.tmin||t>f.tmax+1e-9))return false;
+  const b=blocShares(v)[f.bloc]*100;if(b<f.bmin||b>f.bmax+1e-9)return false;
+  if(S.mode==='winner'&&S.pickWin.size<12&&!S.pickWin.has(winner(v)))return false;
+  return true}
+function dualVals(id){const w=$('#'+id);return[+w.querySelector('.lo').value,+w.querySelector('.hi').value]}
+function paintDual(id){const[a,b]=dualVals(id),w=$('#'+id);const sel=w.querySelector('.sel');sel.style.left=a+'%';sel.style.width=(b-a)+'%';
+  $('#'+id+'v').value=`${a}%–${b}%`}
+function setDual(id,a,b){const w=$('#'+id);w.querySelector('.lo').value=a;w.querySelector('.hi').value=b;paintDual(id)}
+function staged(){const[t0,t1]=dualVals('fT'),[b0,b1]=dualVals('fB');return{tmin:t0,tmax:t1,bloc:$('#fBloc').value,bmin:b0,bmax:b1}}
+function markPending(){const a=staged(),f=S.f;$('#fapply').classList.toggle('pending',JSON.stringify(a)!==JSON.stringify(f))}
+function applyFilters(){S.f=staged();render();if(S.view==='near'&&S.near.pt)runNear()}
+function renderFilters(){
+  const show=S.mode==='winner'||S.mode==='party';
+  $('#chipsRow').hidden=!show;
+  $('#chipsLabel').textContent=S.mode==='party'?'מפלגות (סכום)':'מובילה';
+  if(show){const set=S.mode==='party'?S.pickParty:S.pickWin;
+    $('#chips').innerHTML=(S.mode==='winner'?`<button type="button" class="chip all" data-all>${set.size===12?'נקה הכל':'בחר הכל'}</button>`:'')+
+      BORDER.map(b=>D.parties.map((p,i)=>p.k==='oth'||p.bloc!==b?'':`<button type="button" class="chip" data-i="${i}" aria-pressed="${set.has(i)}"><i style="background:${pc(p.k)}"></i>${esc(p.name)}</button>`).join('')).filter(Boolean).join('<span class="csep" aria-hidden="true"></span>')}
+  setDual('fT',S.f.tmin,S.f.tmax);setDual('fB',S.f.bmin,S.f.bmax);$('#fBloc').value=S.f.bloc;markPending();
+  const tot=D.nb.filter(p=>p.v&&nbIn(p)),pass=tot.filter(p=>passes(p.v));
+  const vt=tot.reduce((a,p)=>a+p.v[VA],0),vp=pass.reduce((a,p)=>a+p.v[VA],0);
+  $('#fsum').textContent=`${fmt(pass.length)} מתוך ${fmt(tot.length)} שכונות ואזורים עומדים בסינון · ${pct(vt?vp/vt:0)} מהקולות`+(scopeLabel()?' '+scopeLabel():'');
+  $('#fbtn').classList.toggle('on',filterActive());
+}
+function filterText(){const f=S.f,p=[];if(f.tmin>0||f.tmax<100)p.push(`הצבעה <bdi dir="ltr">${f.tmin}%–${f.tmax}%</bdi>`);
+  if(f.bmin>0||f.bmax<100)p.push(`${BLOCS[f.bloc].name} <bdi dir="ltr">${f.bmin}%–${f.bmax}%</bdi>`);
+  if(S.mode==='winner'&&S.pickWin.size<12)p.push('מובילה: '+[...S.pickWin].map(i=>esc(D.parties[i].name)).join(', '));return p.join(' · ')}
+function renderLegend(){
+  const el=$('#legend');el.className=legendOpen?'':'closed';
+  let body='';
+  if(S.mode==='margin'){
+    const sw=[...MCOL.opp].reverse().concat(MCOL.coal);
+    body=`<div class="scale">${sw.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
+      <div class="lbls num"><span>50+</span><span>25</span><span>10</span><span>0</span><span>10</span><span>25</span><span>50+</span></div>
+      <div class="lbls" style="direction:rtl"><span style="color:${MCOL.coal[3]}">רוב לקואליציה</span><span style="color:${MCOL.opp[3]}">רוב לאופוזיציה</span></div>
+      <div class="scope">פער בנקודות אחוז: קואליציה מול אופוזיציה ומפלגות ערביות</div>`;
+  }else if(S.mode==='winner'){
+    const seen=new Set(D.nb.filter(p=>p.v).map(p=>winner(p.v)));
+    body=BORDER.map(b=>{const its=D.parties.map((p,i)=>seen.has(i)&&p.bloc===b?`<div><i style="background:${pc(p.k)}"></i>${esc(p.name)}</div>`:'').join('');
+      return its?`<div class="lgrp">${BLOCS[b].name}</div><div class="cats">${its}</div>`:''}).join('');
+  }else{
+    const n=breaks.length+1,cols=[...Array(n)].map((_,c)=>mix(css('--ramp0'),hue(),0.12+0.88*c/Math.max(1,breaks.length)));
+    body=`<div class="scale">${cols.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
+      <div class="lbls num"><span>0</span>${breaks.map(b=>`<span>${Math.round(b*1000)/10}</span>`).join('')}<span>%</span></div><div class="scope">מדרגות לפי ${distMode()&&S.dist.pt?'שכונות ברדיוס':S.town&&!distMode()?'שכונות '+esc(D.towns[S.town].name):'כל השכונות בארץ'}</div>`;
+  }
+  if(filterActive())body+=`<div class="scope" style="color:var(--warn)">סינון פעיל: ${filterText()}</div>`;
+  body+=`<div class="note"><span><i style="background:${css('--empty')};border:1px solid ${css('--land-line')}"></i>אין קלפי בשטח השכונה</span><span><i style="border:1.5px dashed ${css('--warn')}"></i>שיוך קלפיות לא ודאי</span><span><i style="border:1.5px dotted ${css('--muted')}"></i>אזור משוער סביב קלפיות</span></div>`;
+  const ttl=S.mode==='margin'?'רוב גושים':S.mode==='winner'?'המפלגה המובילה':S.mode==='turnout'?'אחוז הצבעה':S.mode==='party'?'שיעור '+partyLabel():'שיעור '+BLOCS[S.bloc].name;
+  el.innerHTML=`<div class="ttl" role="button" tabindex="0"><span>${esc(ttl)}</span><span aria-hidden="true">${legendOpen?'−':'+'}</span></div><div class="body">${body}</div>`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderList(){
+  const q=S.q.toLowerCase();let items=[];
+  for(const t of Object.values(D.towns)){if(!t.v||!t.v[VA])continue;if(!townIn(t))continue;
+    if(q&&!t.name.includes(q))continue;if(filterActive()&&!passes(t.v))continue;items.push({type:'t',id:t.code,name:t.name,sub:'כל הישוב · '+fmt(t.v[VA])+' קולות',v:t.v})}
+  const townItems=items;items=[];
+  for(const p of D.nb){if(!p.v)continue;if(!nbIn(p))continue;
+    if(q&&!(p.name.includes(q)||p.town.includes(q)))continue;if(filterActive()&&!passes(p.v))continue;items.push({type:'n',id:String(p.i),name:p.name||'ללא שם',sub:(p.pseudo?p.town+' · אזור משוער':p.town)+(distMode()&&S.dist.pt?` · ${p._d<0.05?'במרכז':p._d.toFixed(1)+' ק"מ'}`:''),v:p.v,p})}
+  const key=x=>{const m=metric(x.v);return S.mode==='winner'?(x.v[P0+m]/x.v[VA]):m};
+  items.sort((a,b)=>(key(b)??-1)-(key(a)??-1));
+  townItems.sort((a,b)=>b.v[VA]-a.v[VA]);
+  const all=((S.town&&(!distMode()||S.dist.pt))||q?townItems:[]).concat(items);
+  D.lastList={towns:townItems,areas:items};
+  const shown=all.slice(0,CFG.maxRows);
+  $('#count').textContent=`${fmt(items.length)} שכונות ואזורים`+(filterActive()?' (מסונן)':'')+(all.length>shown.length?` · מוצגות ${fmt(shown.length)}, אפשר לצמצם בחיפוש או בבחירת ישוב`:'')+' · ממוין לפי '+(S.mode==='winner'?'שיעור המפלגה המובילה':'הערך במפה');
+  const f=document.createDocumentFragment();
+  for(const x of shown){const r=document.createElement('div');r.className='row'+(x.type==='t'?' town':'');r.dataset.type=x.type;r.dataset.id=x.id;
+    r.innerHTML='<span class="sw"></span><span class="nm"><b></b><small></small></span><span class="val num"></span>';
+    r.querySelector('.sw').style.background=colorFor(x.v)||css('--empty');r.querySelector('b').textContent=x.name;r.querySelector('small').textContent=x.sub;
+    const m=metric(x.v);r.querySelector('.val').textContent=S.mode==='winner'?D.parties[m].name:S.mode==='margin'?marginText(m):pct(m);f.append(r)}
+  const rows=$('#rows');rows.replaceChildren(f);
+  if(!shown.length)rows.innerHTML='<div class="hint">לא נמצאו תוצאות.</div>';
+  markRows();
+}
+function markRows(){document.querySelectorAll('#rows .row').forEach(r=>r.classList.toggle('sel',!!S.sel&&r.dataset.type===S.sel.type&&r.dataset.id===S.sel.id))}
+function togglePin(key){if(S.pins.includes(key))S.pins=S.pins.filter(p=>p!==key);else{S.pins.push(key);if(S.pins.length>CFG.maxCompare)S.pins.shift()}renderDetail()}
+
+function renderDetail(){
+  const el=$('#detail');if(S.view==='near'){el.innerHTML=nearHTML();return}
+  const e=entity(S.sel);
+  if(!e){el.innerHTML=overviewHTML();return}
+  if(!e.v){el.innerHTML=`<h2>${esc(e.name)}</h2><div class="where">${esc(e.where)}</div><p class="empty">אין קלפי בשטח השכונה. תושביה מצביעים בקלפיות בשכונות סמוכות.</p>`+cmpHTML()+aboutHTML();return}
+  const v=e.v,turn=v[VO]/v[E];
+  const sh=D.parties.map((p,i)=>({p,i,x:v[P0+i]/v[VA]})).sort((a,b)=>b.x-a.x).filter(o=>o.x>=0.002||o.p.k==='oth');
+  const others=sh.filter(o=>o.p.k==='oth');const main=sh.filter(o=>o.p.k!=='oth').concat(others);
+  const tv=e.type==='n'&&e.town?e.town.v:null;
+  const max=Math.max(...main.map(o=>Math.max(o.x,tv?tv[P0+o.i]/tv[VA]:0,D.natShares[o.i])));
+  const bs=blocShares(v);
+  const key=e.type+':'+e.id,pinned=S.pins.includes(key);
+  let q='';
+  if(e.type==='n'){const ex=e.exact/v[VA],un=e.unc/v[VA];
+    q=(e.pseudo?`<div class="qual">אזור משוער: הישוב אינו בשכבת השכונות, ולכן האזור נבנה סביב אתרי הקלפי שלו (עד 600 מ' מכל אתר). גבולותיו אינם גבולות שכונה רשמיים.</div>`:'')+`<div class="qual${un>0.3?' warn':''}">${e.sites} אתרי קלפי · ${pct(ex,0)} מהקולות ממוקמים במדויק${un>0?` · ${pct(un,0)} עם שיוך לשכונה לא ודאי`:''}. אחוז ההצבעה מחושב מול בעלי זכות הבחירה הרשומים בקלפיות (ללא מעטפות כפולות).</div>`}
+  else{const t=e.t;const unp=t.unplaced/t.v[VA];const inN=t.vin?t.vin[VA]/t.v[VA]:0;
+    q=`<div class="qual">${e.sites} אתרי קלפי · ${pct(inN,0)} מהקולות בתוך שכבת השכונות${unp>0?` · ${pct(unp,1)} לא מוקמו כלל`:''}.</div>`}
+  el.innerHTML=`
+   <h2>${esc(e.name)}</h2><div class="where">${esc(e.where)}${e.type==='n'&&e.town?` · <a href="#" data-goto="t:${e.town.code}" style="color:var(--accent)">לכל ${esc(e.town.name)}</a>`:''}</div>
+   <div class="kpis num">
+     <div class="kpi"><small>אחוז הצבעה</small><b>${pct(turn)}</b></div>
+     <div class="kpi"><small>קולות כשרים</small><b>${fmt(v[VA])}</b></div>
+     <div class="kpi"><small>בעלי זכות בחירה</small><b>${fmt(v[E])}</b></div>
+     <div class="kpi"><small>קלפיות</small><b>${fmt(e.boxes)}</b></div>
+   </div>
+   <div class="sec"><h3>גושים</h3>
+     <div class="bloc">${['coal','opp','arab','other'].map(b=>`<span title="${BLOCS[b].name} ${pct(bs[b])}" style="width:${bs[b]*100}%;background:${bc(b)}"></span>`).join('')}</div>
+     <div class="bloclbl num">${['coal','opp','arab','other'].map(b=>`<span><i style="background:${bc(b)}"></i>${BLOCS[b].name} ${pct(bs[b])}</span>`).join('')}</div>
+   </div>
+   <div class="sec"><h3>מפלגות לפי גוש</h3><div class="bars num">${byBloc(main,o=>{
+      const tx=tv?tv[P0+o.i]/tv[VA]:null,nx=D.natShares[o.i];
+      return `<div class="bar" title="${esc(o.p.name)}: ${pct(o.x)}${tx!=null?' · ישוב '+pct(tx):''} · ארצי ${pct(nx)}"><span class="lab">${esc(o.p.name)}</span><span class="trk"><span class="fill" style="width:${o.x/max*100}%;background:${pc(o.p.k)}"></span>${tx!=null?`<span class="mk" style="inset-inline-start:${tx/max*100}%"></span>`:''}<span class="mk nat" style="inset-inline-start:${nx/max*100}%"></span></span><span class="pc">${pct(o.x)}</span></div>`})}</div>
+     <div class="keyline">${tv?`<span><i></i>ממוצע ${esc(e.town.name)}</span>`:''}<span><i class="nat"></i>ארצי</span></div>
+   </div>
+   ${q}
+   <div class="actions"><button class="btn ${pinned?'ghost':''}" data-pin="${key}">${pinned?'הסרה מההשוואה':'הוספה להשוואה'}</button></div>
+   ${cmpHTML()}${aboutHTML()}`;
+}
+function cmpHTML(){
+  if(!S.pins.length)return'';
+  const ents=S.pins.map(k=>{const[t,id]=k.split(':');return entity({type:t,id})}).filter(e=>e&&e.v);
+  if(!ents.length)return'';
+  const rows=D.parties.map((p,i)=>({p,i,mx:Math.max(...ents.map(e=>e.v[P0+i]/e.v[VA]))})).filter(r=>r.mx>=0.01).sort((a,b)=>b.mx-a.mx);
+  return `<div class="sec" id="cmp"><h3>השוואה (${ents.length})</h3><div class="cmpwrap"><table class="num"><thead><tr><th></th>${ents.map(e=>`<th>${esc(e.name)}<button class="x" data-unpin="${e.type}:${e.id}" aria-label="הסרה">×</button></th>`).join('')}</tr></thead><tbody>
+   <tr><td>אחוז הצבעה</td>${ents.map(e=>`<td>${pct(e.v[VO]/e.v[E])}</td>`).join('')}</tr>
+   ${['coal','opp','arab'].map(b=>`<tr><td>${BLOCS[b].name}</td>${ents.map(e=>`<td>${pct(blocShares(e.v)[b])}</td>`).join('')}</tr>`).join('')}
+   ${rows.map(r=>`<tr><td><i style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-inline-end:5px;background:${pc(r.p.k)}"></i>${esc(r.p.name)}</td>${ents.map(e=>`<td>${pct(e.v[P0+r.i]/e.v[VA])}</td>`).join('')}</tr>`).join('')}
+   </tbody></table></div></div>`;
+}
+function overviewHTML(){
+  const n=D.meta.national,d=D.meta.double;
+  return `<h2>תוצאות ארציות</h2><div class="where">בחירו שכונה במפה או ברשימה</div>
+   <div class="kpis num">
+    <div class="kpi"><small>אחוז הצבעה</small><b>${pct(n[VO]/n[E])}</b></div>
+    <div class="kpi"><small>קולות כשרים</small><b>${fmt(n[VA])}</b></div>
+    <div class="kpi"><small>שכונות עם קלפי</small><b>${fmt(D.nb.filter(p=>p.v&&!p.pseudo).length)}</b></div>
+    <div class="kpi"><small>אזורים משוערים</small><b>${fmt(D.nb.filter(p=>p.pseudo).length)}</b></div>
+   </div>
+   <div class="sec"><h3>מפלגות לפי גוש, ארצי</h3><div class="bars num">${(()=>{const L=D.parties.map((p,i)=>({p,i,x:n[P0+i]/n[VA]})).sort((a,b)=>b.x-a.x),mx=L[0].x;
+     return byBloc(L,o=>`<div class="bar"><span class="lab">${esc(o.p.name)}</span><span class="trk"><span class="fill" style="width:${o.x/mx*100}%;background:${pc(o.p.k)}"></span></span><span class="pc">${pct(o.x)}</span></div>`)})()}</div></div>
+   <div class="qual">כולל ${fmt(d[VA])} קולות במעטפות כפולות (${pct(d[VA]/n[VA])}), שאין להם מיקום ולכן אינם מופיעים במפה.</div>
+   <div class="qual" style="margin-top:10px">גרסה ${BUILD}</div>
+   ${cmpHTML()}${aboutHTML()}`;
+}
+function aboutHTML(){return `<details class="about"><summary>מקורות ושיטה</summary>
+  <p><b>תוצאות:</b> ועדת הבחירות המרכזית, תוצאות הכנסת ה-25 לפי קלפי. סך הקולות תואם לתוצאה הרשמית.</p>
+  <p><b>שכונות:</b> שכבת השכונות של מפ"י (via over.org.il). השכבה מכסה 174 ישובים. לקלפיות שמחוץ לשכבה נבנו <b>אזורים משוערים</b>: תאי וורונוי סביב כל אתר קלפי, עד 600 מ' ממנו, שאינם חופפים לשכונות או לים. ישוב עם עד 4 אתרים הוא אזור אחד; ישוב גדול יותר מחולק לאזורים של כ-4 אתרים.</p>
+  <p><b>מיקום קלפיות:</b> אין רשימת מיקומים רשמית לכנסת ה-25, ולכן כל אתר קלפי (ישוב + קוד ריכוז) מוקם לפי הראיות החזקות ביותר: התאמה מדויקת לרשימת קלפיות הכנסת ה-26 (govmap), כתובות מגואוקדות מבחירות 2021 (Israel-Data), מספר קלפי בסיסי או קוד ריכוז. 0.7% מהקולות לא מוקמו.</p>
+  <p><b>הדמוקרטים</b> = העבודה + מרצ, שרצו בנפרד ב-2022. <b>גושים</b> לפי הרכב הקואליציה שהוקמה ב-2022.</p>
+  <p><b>אחוז הצבעה</b> מחושב מול בעלי זכות הבחירה בקלפי. מצביעי מעטפות כפולות (חיילים, נציגויות ועוד) רשומים בקלפי הבית אך הצביעו במקום אחר, ולכן האחוז מעט נמוך מהאמיתי.</p></details>`}
+
+/* ===== Nearest neighbourhoods ===== */
+function centroid(g){ // area-weighted centroid of outer rings, [lat,lng]
+  const polys=g.type==='Polygon'?[g.coordinates]:g.coordinates;let A=0,X=0,Y=0;
+  for(const pl of polys){const r=pl[0];for(let i=0,j=r.length-1;i<r.length;j=i++){const f=r[j][0]*r[i][1]-r[i][0]*r[j][1];A+=f;X+=(r[j][0]+r[i][0])*f;Y+=(r[j][1]+r[i][1])*f}}
+  if(Math.abs(A)<1e-12){const r=polys[0][0];return[r[0][1],r[0][0]]}
+  return[Y/(3*A),X/(3*A)]}
+function kmXY(lat0){const k=Math.cos(lat0*Math.PI/180);return(lng,lat)=>[lng*111.32*k,lat*110.57]}
+function polyDist(g,pt){ // km from point to polygon (0 inside)
+  const P=kmXY(pt.lat),[px,py]=P(pt.lng,pt.lat),polys=g.type==='Polygon'?[g.coordinates]:g.coordinates;let inside=false,best=Infinity;
+  for(const pl of polys)for(const r of pl){let inR=false;
+    for(let i=0,j=r.length-1;i<r.length;j=i++){const[ax,ay]=P(r[j][0],r[j][1]),[bx,by]=P(r[i][0],r[i][1]);
+      if((ay>py)!==(by>py)&&px<(bx-ax)*(py-ay)/(by-ay)+ax)inR=!inR;
+      const dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy;let t=L2?((px-ax)*dx+(py-ay)*dy)/L2:0;t=Math.max(0,Math.min(1,t));
+      const d=Math.hypot(px-ax-t*dx,py-ay-t*dy);if(d<best)best=d}
+    if(inR)inside=!inside}
+  return inside?0:best}
+function openNear(){
+  if(S.view==='near'&&!mob()){S.view='main';$('#nbtn').setAttribute('aria-expanded','false');renderDetail();return}
+  S.view='near';$('#nbtn').setAttribute('aria-expanded','true');renderDetail();if(mob())setTab('detail')}
+function nearMsg(t,ok){const m=$('#nMsg');if(m){m.textContent=t;m.className='nmsg'+(ok?' ok':'')}}
+function nearAction(a){
+  if(a==='pick'){S.picking='near';$('#map').classList.add('picking');$('#pickhint').hidden=false;if(mob())setTab('map');nearMsg('הקישו על המפה במקום הרצוי',true);return}
+  if(a==='geo'){if(!navigator.geolocation){nearMsg('הדפדפן לא תומך באיתור מיקום.');return}
+    nearMsg('מאתר מיקום…',true);
+    navigator.geolocation.getCurrentPosition(p=>setNearPoint(L.latLng(p.coords.latitude,p.coords.longitude)),
+      e=>nearMsg('לא ניתן לקבל את המיקום'+(e&&e.code===1?' (ההרשאה נדחתה)':'')+'. אפשר לבחור במפה או להדביק קואורדינטות.'),{timeout:12000,enableHighAccuracy:true});return}
+  if(a==='coord'){const r=parseCoord($('#nCoord').value);if(typeof r==='string'){nearMsg(r);return}setNearPoint(r);return}
+  if(a==='copy'){copyNear();return}
+  if(a==='fit'){const r=S.near.res;if(r.length){let b=L.latLngBounds([S.near.pt]);r.forEach(x=>b.extend(x.p.layer.getBounds()));if(mob())setTab('map');fit(b)}return}
+  if(a==='clear'){S.near.pt=null;S.near.res=[];drawNear();renderDetail();return}
+  if(a==='back'){S.view='main';$('#nbtn').setAttribute('aria-expanded','false');renderDetail();return}
+}
+function onNearChange(e){if(S.view!=='near')return;const id=e.target.id;
+  if(id==='nN'){S.near.n=Math.max(1,Math.min(100,parseInt(e.target.value)||10))}
+  else if(id==='nPseudo')S.near.pseudo=e.target.checked;
+  else if(id==='nOnlyF')S.near.onlyF=e.target.checked;else return;
+  if(S.near.pt){runNear();renderDetail()}}
+function parseCoord(str){const t=(str||'').replace(/[^\d.,\-\s]/g,' ');const n=t.match(/-?\d+(?:\.\d+)?/g);
+  if(!n||n.length<2)return 'יש להזין קו רוחב וקו אורך, למשל 32.0853, 34.7818';
+  let lat=+n[0],lng=+n[1];if(lat>34&&lat<36.5&&lng>29&&lng<34)[lat,lng]=[lng,lat];
+  if(!(lat>29&&lat<33.6&&lng>34&&lng<36.5))return 'הקואורדינטות מחוץ לתחום המפה.';
+  return L.latLng(lat,lng)}
+function endPick(){S.picking=false;$('#map').classList.remove('picking');$('#pickhint').hidden=true}
+function onPick(ll){const t=S.picking;if(t==='dist'){endPick();setDistPoint(ll)}else setNearPoint(ll)}
+/* ---- distance filter for the list */
+function distMsg(t,ok){const m=$('#dMsg');m.textContent=t||'';m.className='nmsg'+(ok?' ok':'')}
+function distAction(a){
+  if(a==='pick'){S.picking='dist';$('#map').classList.add('picking');$('#pickhint').hidden=false;if(mob())setTab('map');distMsg('הקישו על המפה במרכז הרצוי',true);return}
+  if(a==='geo'){if(!navigator.geolocation){distMsg('הדפדפן לא תומך באיתור מיקום.');return}distMsg('מאתר מיקום…',true);
+    navigator.geolocation.getCurrentPosition(p=>setDistPoint(L.latLng(p.coords.latitude,p.coords.longitude)),
+      e=>distMsg('לא ניתן לקבל את המיקום'+(e&&e.code===1?' (ההרשאה נדחתה)':'')+'. אפשר לבחור במפה או להדביק קואורדינטות.'),{timeout:12000,enableHighAccuracy:true});return}
+  if(a==='coord'){const r=parseCoord($('#dCoord').value);if(typeof r==='string'){distMsg(r);return}setDistPoint(r)}}
+function setDistPoint(ll){S.dist.pt=ll;$('#dCoord').value=ll.lat.toFixed(5)+', '+ll.lng.toFixed(5);computeDist();drawDist(true);render();
+  const n=D.nb.filter(p=>p._dIn).length;distMsg(`${fmt(n)} שכונות ואזורים ברדיוס ${S.dist.km} ק"מ`,true);if(mob())setTab('list')}
+function computeDist(){const pt=S.dist.pt,R=S.dist.km,P=kmXY(pt.lat),[px,py]=P(pt.lng,pt.lat);D.townHit=new Set();
+  for(const p of D.nb){p._dIn=false;p._d=null;if(!p.v)continue;const[x,y]=P(p.c[1],p.c[0]);if(Math.hypot(x-px,y-py)>R+8)continue;
+    const d=polyDist(p.f.geometry,pt);p._d=d;if(d<=R){p._dIn=true;if(p.tcode)D.townHit.add(p.tcode)}}}
+function drawDist(fitIt){if(D.distLayer){map.removeLayer(D.distLayer);D.distLayer=null}
+  if(!distMode()||!S.dist.pt)return;
+  const c=L.circle(S.dist.pt,{radius:S.dist.km*1000,color:css('--accent'),weight:2,dashArray:'6 5',fill:false,interactive:false});
+  D.distLayer=L.layerGroup([c,L.circleMarker(S.dist.pt,{radius:6,color:'#ffffff',weight:2.5,fillColor:css('--accent'),fillOpacity:1,interactive:false})]).addTo(map);
+  if(fitIt)fit(c.getBounds())}
+/* ---- export & copy */
+function listMsg(t,ok){const m=$('#lMsg');m.textContent=t||'';m.className='nmsg'+(ok?' ok':'')}
+function rowData(kind,name,town,v,d){const b=blocShares(v),w=winner(v),sh=D.parties.map((p,i)=>({i,x:v[P0+i]/v[VA]})).filter(o=>D.parties[o.i].k!=='oth').sort((a,c)=>c.x-a.x);
+  return{kind,name,town,d,elig:v[E],voters:v[VO],turn:v[E]?v[VO]/v[E]:null,valid:v[VA],coal:b.coal,opp:b.opp,arab:b.arab,margin:marginOf(v),
+    w:D.parties[w].name,wk:D.parties[w].k,wx:v[P0+w]/v[VA],s2:sh[1]?D.parties[sh[1].i].name:'',s2x:sh[1]?sh[1].x:null,parties:D.parties.map((p,i)=>v[P0+i]/v[VA])}}
+function scopeText(){const p=[];if(distMode()&&S.dist.pt)p.push(`ברדיוס ${S.dist.km} ק"מ מ-${S.dist.pt.lat.toFixed(5)}, ${S.dist.pt.lng.toFixed(5)}`);
+  else if(S.town&&!distMode())p.push('ישוב: '+D.towns[S.town].name);if(S.q)p.push('חיפוש: '+S.q);
+  if(filterActive())p.push('סינון: '+filterText().replace(/<[^>]+>/g,''));return p.join(' · ')||'כל הארץ'}
+async function loadExcelJS(){if(window.ExcelJS)return window.ExcelJS;await new Promise((ok,no)=>{const s=document.createElement('script');s.src=CFG.exceljs;s.onload=ok;s.onerror=no;document.head.append(s)});return window.ExcelJS}
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+async function exportList(){
+  const L0=D.lastList;if(!L0||!(L0.areas.length+L0.towns.length)){listMsg('אין שורות לייצוא.');return}
+  const rows=L0.towns.map(t=>rowData('ישוב',t.name,t.name,t.v,null)).concat(L0.areas.map(a=>rowData(a.p.pseudo?'אזור משוער':'שכונה',a.p.name||'ללא שם',a.p.town,a.v,distMode()&&S.dist.pt?a.p._d:null)));
+  const stamp=new Date().toISOString().slice(0,10),fname=`israel-vote-k25-${stamp}`;
+  listMsg('מכין קובץ…',true);
+  try{
+    const X=await loadExcelJS();const wb=new X.Workbook();wb.creator='מפת הצבעה לפי שכונות';
+    const ws=wb.addWorksheet('רשימה',{views:[{rightToLeft:true,state:'frozen',ySplit:1}]});
+    const hasD=rows.some(r=>r.d!=null);
+    const cols=[['סוג','kind',12],['שם','name',28],['ישוב','town',20]].concat(hasD?[['מרחק (ק"מ)','d',11]]:[]).concat([
+      ['בעלי זכות בחירה','elig',13],['מצביעים','voters',11],['אחוז הצבעה','turn',11],['קולות כשרים','valid',12],
+      ['גוש הקואליציה','coal',12],['גוש האופוזיציה','opp',12],['מפלגות ערביות','arab',12],['פער גושים (נק\' אחוז)','margin',14],
+      ['מפלגה מובילה','w',16],['שיעור המובילה','wx',12],['מפלגה שנייה','s2',16],['שיעור השנייה','s2x',12]]);
+    D.parties.forEach((p,i)=>cols.push([p.name,'p'+i,11]));
+    ws.columns=cols.map(([h,k,w])=>({header:h,key:k,width:w}));
+    for(const r of rows){const o={...r};r.parties.forEach((x,i)=>o['p'+i]=x);if(o.d!=null)o.d=Math.round(o.d*100)/100;o.margin=Math.round(o.margin*1000)/10;ws.addRow(o)}
+    const pctCols=['turn','coal','opp','arab','wx','s2x'].concat(D.parties.map((p,i)=>'p'+i));
+    pctCols.forEach(k=>ws.getColumn(k).numFmt='0.0%');['elig','voters','valid'].forEach(k=>ws.getColumn(k).numFmt='#,##0');ws.getColumn('margin').numFmt='+0.0;-0.0;0';
+    const hdr=ws.getRow(1);hdr.font={bold:true,color:{argb:'FFFFFFFF'}};hdr.alignment={vertical:'middle',wrapText:true};hdr.height=32;
+    hdr.eachCell(c=>c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0F6E8C'}});
+    const argb=h=>'FF'+h.replace('#','').toUpperCase();
+    rows.forEach((r,k)=>{const row=ws.getRow(k+2);
+      const mc=row.getCell('margin');mc.fill={type:'pattern',pattern:'solid',fgColor:{argb:argb(marginColor(r.margin))}};if(Math.abs(r.margin)>=0.25)mc.font={bold:true,color:{argb:'FFFFFFFF'}};
+      const wc=row.getCell('w');wc.fill={type:'pattern',pattern:'solid',fgColor:{argb:argb(pc(r.wk))}};wc.font={bold:true,color:{argb:'FFFFFFFF'}};
+      if(r.kind==='ישוב')row.font={bold:true}});
+    const n=rows.length+1,colL=k=>ws.getColumn(k).letter;
+    ws.addConditionalFormatting({ref:`${colL('turn')}2:${colL('turn')}${n}`,rules:[{type:'dataBar',minLength:0,maxLength:100,cfvo:[{type:'num',value:0},{type:'num',value:1}],color:{argb:'FF7FB6CF'}}]});
+    ['coal','opp','arab'].forEach(k=>ws.addConditionalFormatting({ref:`${colL(k)}2:${colL(k)}${n}`,rules:[{type:'colorScale',cfvo:[{type:'num',value:0},{type:'num',value:1}],color:[{argb:'FFFFFFFF'},{argb:argb(BLOCS[k].c[0])}]}]}));
+    ws.autoFilter={from:{row:1,column:1},to:{row:1,column:cols.length}};
+    const info=wb.addWorksheet('מידע',{views:[{rightToLeft:true}]});
+    info.columns=[{width:22},{width:90}];
+    [['מקור','ועדת הבחירות המרכזית, הכנסת ה-25 (1.11.2022), תוצאות לפי קלפי משויכות לשכונות'],['היקף',scopeText()],['ממוין לפי','הערך במפה: '+($('#mode').selectedOptions[0]||{}).textContent],
+     ['שורות',`${L0.towns.length} ישובים, ${L0.areas.length} שכונות ואזורים`],['גושים','קואליציה: הליכוד, הציונות הדתית, ש"ס, יהדות התורה · אופוזיציה: יש עתיד, המחנה הממלכתי, ישראל ביתנו, הדמוקרטים, הבית היהודי · מפלגות ערביות: רע"ם, חד"ש-תע"ל, בל"ד'],
+     ['פער גושים','קואליציה פחות (אופוזיציה + מפלגות ערביות), בנקודות אחוז'],['אזור משוער','ישוב שאינו בשכבת השכונות; האזור נבנה סביב אתרי הקלפי (עד 600 מ\')'],['הופק',new Date().toLocaleString('he-IL')]]
+     .forEach(r=>{const x=info.addRow(r);x.getCell(1).font={bold:true};x.alignment={wrapText:true,vertical:'top'}});
+    const buf=await wb.xlsx.writeBuffer();
+    saveBlob(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fname+'.xlsx');
+    listMsg(`הקובץ ${fname}.xlsx נוצר (${rows.length} שורות). אם ההורדה לא התחילה, ייתכן שהתצוגה חוסמת הורדות; באתר עצמו היא עובדת.`,true);
+  }catch(err){console.warn('xlsx export failed, falling back to CSV',err);
+    const head=['סוג','שם','ישוב','מרחק (ק"מ)','בעלי זכות בחירה','מצביעים','אחוז הצבעה','קולות כשרים','קואליציה','אופוזיציה','מפלגות ערביות','פער גושים','מפלגה מובילה','שיעור המובילה'].concat(D.parties.map(p=>p.name));
+    const q=x=>{x=x==null?'':String(x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x},p1=x=>x==null?'':(x*100).toFixed(1);
+    const lines=[head.map(q).join(',')].concat(rows.map(r=>[r.kind,r.name,r.town,r.d==null?'':r.d.toFixed(2),r.elig,r.voters,p1(r.turn),r.valid,p1(r.coal),p1(r.opp),p1(r.arab),(r.margin*100).toFixed(1),r.w,p1(r.wx)].concat(r.parties.map(p1)).map(q).join(',')));
+    saveBlob(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),fname+'.csv');
+    listMsg(`נוצר קובץ CSV (${rows.length} שורות). אם ההורדה לא התחילה, באתר עצמו היא עובדת.`,true)}}
+function townsForCopy(){const L0=D.lastList||{towns:[],areas:[]},seen=new Map();
+  const dm=distMode()&&S.dist.pt;
+  for(const t of L0.towns)seen.set(t.id,{t:D.towns[t.id],d:null});
+  for(const a of L0.areas){const c=a.p.tcode;if(!c||!D.towns[c])continue;const o=seen.get(c)||{t:D.towns[c],d:null};if(dm&&a.p._d!=null&&(o.d==null||a.p._d<o.d))o.d=a.p._d;seen.set(c,o)}
+  const arr=[...seen.values()];arr.sort(dm?(a,b)=>(a.d??1e9)-(b.d??1e9):(a,b)=>b.t.v[VA]-a.t.v[VA]);return{arr,dm}}
+async function copyTowns(){
+  const{arr,dm}=townsForCopy();if(!arr.length){listMsg('אין ישובים ברשימה.');return}
+  const title=`ישובים (${arr.length}) · בחירות לכנסת ה-25 · ${scopeText()}`;
+  const th=['#','ישוב'].concat(dm?['מרחק (ק"מ)']:[]).concat(['אחוז הצבעה','קואליציה','אופוזיציה','מפלגות ערביות','מפלגה מובילה']);
+  const rws=arr.map((o,k)=>{const v=o.t.v,b=blocShares(v),w=winner(v);return[String(k+1),o.t.name].concat(dm?[o.d==null?'':o.d.toFixed(1)]:[]).concat([pct(v[VO]/v[E]),pct(b.coal),pct(b.opp),pct(b.arab),D.parties[w].name+' '+pct(v[P0+w]/v[VA])])});
+  const td='border:1px solid #9aa5aa;padding:3px 6px;';
+  const html=`<div dir="rtl" style="font-family:Arial,sans-serif"><p style="font-weight:bold;margin:0 0 6px">${esc(title)}</p><table dir="rtl" style="border-collapse:collapse;font-size:10pt"><thead><tr>${th.map(h=>`<th style="${td}background:#dce9ee;text-align:right">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rws.map(r=>`<tr>${r.map((c,i)=>`<td style="${td}text-align:${i<2?'right':'left'}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table><p style="font-size:8pt;color:#666">מקור: ועדת הבחירות המרכזית. נתוני כל הישוב${dm?'; מרחק = השכונה הקרובה ביותר':''}.</p></div>`;
+  const text=title+'\n'+[th].concat(rws).map(r=>r.join('\t')).join('\n');
+  try{if(!window.ClipboardItem)throw 0;await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
+    listMsg(`הועתקו ${arr.length} ישובים כטבלה. אפשר להדביק ב-Word.`,true);return}catch(e){}
+  try{const box=document.createElement('div');box.contentEditable='true';box.style.cssText='position:fixed;left:-9999px;top:0';box.innerHTML=html;document.body.append(box);
+    const r=document.createRange();r.selectNodeContents(box);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);const ok=document.execCommand('copy');sel.removeAllRanges();box.remove();
+    if(ok){listMsg(`הועתקו ${arr.length} ישובים כטבלה. אפשר להדביק ב-Word.`,true);return}}catch(e){}
+  try{await navigator.clipboard.writeText(text);listMsg(`הועתקו ${arr.length} ישובים כטקסט.`,true)}catch(e){listMsg('ההעתקה חסומה בתצוגה הזו. באתר עצמו היא עובדת.')}}
+function setNearPoint(ll){
+  endPick();
+  S.near.pt=ll;S.view='near';$('#nbtn').setAttribute('aria-expanded','true');runNear();renderDetail();
+  if(mob())setTab('detail')}
+function runNear(){
+  const pt=S.near.pt,useF=S.near.onlyF&&filterActive();
+  const P=kmXY(pt.lat),[px,py]=P(pt.lng,pt.lat);
+  let c=D.nb.filter(p=>p.v&&(S.near.pseudo||!p.pseudo)&&(!useF||passes(p.v)))
+    .map(p=>{const[x,y]=P(p.c[1],p.c[0]);return{p,d0:Math.hypot(x-px,y-py)}}).sort((a,b)=>a.d0-b.d0).slice(0,Math.max(60,S.near.n*4));
+  c.forEach(o=>o.d=polyDist(o.p.f.geometry,pt));c.sort((a,b)=>a.d-b.d||a.d0-b.d0);
+  S.near.res=c.slice(0,S.near.n);S.near.usedF=useF;drawNear()}
+function drawNear(){
+  if(D.nearLayer){map.removeLayer(D.nearLayer);D.nearLayer=null}
+  if(!S.near.pt)return;
+  const g=L.layerGroup();
+  S.near.res.forEach((o,k)=>{L.geoJSON(o.p.f,{interactive:false,style:{color:css('--accent'),weight:2.5,fill:false}}).addTo(g);
+    L.marker(o.p.c,{interactive:false,icon:L.divIcon({className:'',html:`<div class="nlabel">${k+1}</div>`,iconSize:[22,18],iconAnchor:[11,9]})}).addTo(g)});
+  L.circleMarker(S.near.pt,{radius:8,color:'#ffffff',weight:3,fillColor:css('--accent'),fillOpacity:1,interactive:false}).addTo(g);
+  D.nearLayer=g.addTo(map)}
+function nearRowText(o,k){const v=o.p.v,b=blocShares(v);
+  return `${k+1}. ${o.p.name||'ללא שם'}, ${o.p.town}${o.p.pseudo?' (אזור משוער)':''} · ${o.d<0.05?'במיקום':o.d.toFixed(1)+' ק"מ'} · הצבעה ${pct(v[VO]/v[E])} · קואליציה ${pct(b.coal)} · אופוזיציה ${pct(b.opp)} · ערביות ${pct(b.arab)} · מובילה: ${D.parties[winner(v)].name}`}
+function nearText(){const pt=S.near.pt;
+  return `שכונות קרובות ל-${pt.lat.toFixed(5)}, ${pt.lng.toFixed(5)} (בחירות לכנסת ה-25)`+(S.near.usedF?`\nסינון: ${filterText().replace(/<[^>]+>/g,'')}`:'')+'\n'+S.near.res.map(nearRowText).join('\n')}
+function copyNear(){const t=nearText();
+  const fallback=()=>{const b=$('#copybox');b.hidden=false;b.value=t;b.focus();b.select();nearMsg('ההעתקה האוטומטית חסומה כאן. הטקסט מסומן, אפשר להעתיק ידנית.')};
+  try{navigator.clipboard.writeText(t).then(()=>nearMsg(`הרשימה הועתקה (${S.near.res.length} שורות).`,true),fallback)}catch(e){fallback()}}
+function nearHTML(){
+  const N=S.near,pt=N.pt,fa=filterActive();
+  let h=`<h2>שכונות קרובות</h2><div class="where">בחרו מיקום ומספר שכונות, וקבלו את השכונות הקרובות ביותר</div>
+  <div class="nearform">
+    <div class="nrow"><button type="button" class="btn" data-near="pick">בחירה במפה</button><button type="button" class="btn ghost" data-near="geo">המיקום שלי</button></div>
+    <div class="nrow"><span class="lbl">או הדביקו קואורדינטות (קו רוחב, קו אורך)</span><input type="text" id="nCoord" inputmode="decimal" placeholder="32.0853, 34.7818" value="${pt?pt.lat.toFixed(5)+', '+pt.lng.toFixed(5):''}" aria-label="קואורדינטות"><button type="button" class="btn ghost" data-near="coord">הצב</button></div>
+    <div class="nrow"><label for="nN" class="chk">מספר שכונות</label><input type="number" id="nN" min="1" max="100" value="${N.n}"></div>
+    <label class="chk"><input type="checkbox" id="nPseudo" ${N.pseudo?'checked':''}> כולל אזורים משוערים</label>
+    <label class="chk"><input type="checkbox" id="nOnlyF" ${N.onlyF?'checked':''} ${fa?'':'disabled'}> רק שכונות שעומדות בסינון ${fa?'':'(אין סינון פעיל)'}</label>
+    <div class="nmsg" id="nMsg"></div>
+  </div>`;
+  if(pt&&N.res.length){
+    h+=`<div class="sec"><h3>${N.res.length} השכונות הקרובות${N.usedF?' (מסונן)':''}</h3>
+    <div class="actions" style="margin:0 0 6px"><button type="button" class="btn" data-near="copy">העתקה</button><button type="button" class="btn ghost" data-near="fit">הצג במפה</button><button type="button" class="btn ghost" data-near="clear">ניקוי</button></div>
+    <textarea id="copybox" hidden readonly aria-label="טקסט להעתקה"></textarea>
+    <table class="nres num"><thead><tr><th>#</th><th>שכונה</th><th>מרחק</th><th>הצבעה</th><th>רוב גושים</th></tr></thead><tbody>
+    ${N.res.map((o,k)=>{const v=o.p.v,m=marginOf(v);return `<tr data-goto="n:${o.p.i}"><td class="rk">${k+1}</td><td>${esc(o.p.name||'ללא שם')}<small>${esc(o.p.town)}${o.p.pseudo?' · משוער':''}</small></td><td>${o.d<0.05?'במיקום':o.d.toFixed(1)+' ק"מ'}</td><td>${pct(v[VO]/v[E])}</td><td><i class="mg" style="background:${marginColor(m)}"></i>${marginText(m)}</td></tr>`}).join('')}
+    </tbody></table></div>`;
+  }else if(pt){h+=`<p class="empty">לא נמצאו שכונות${N.usedF?' שעומדות בסינון':''}.</p>`}
+  h+=`<div class="actions"><button type="button" class="btn ghost" data-near="back">חזרה לפרטים</button></div>`;
+  return h}
+
+boot();
+</script>
+
+</body>
+</html>
